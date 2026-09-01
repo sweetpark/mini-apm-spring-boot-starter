@@ -9,19 +9,46 @@
 
 ### 💡 왜 이 라이브러리가 필요한가? (Problem Statement)
 * **무거운 APM 에이전트 부담**: Pinpoint, Datadog, Scouter 등 대형 APM 도구는 인프라 비용과 설정 복잡도가 큽니다.
-* **비즈니스 코드 침투 없는 모니터링**: 코드 수정 없이 SQL 실행 시간(`0.001ms` 정밀도), 바인딩된 완성형 SQL, 슬로우 쿼리를 자동으로 수집해야 합니다.
+* **비즈니스 코드 침투 없는 모니터링**: 코드 수정 없이 SQL 실행 시간(`0.001ms` 정밀도), 파라미터가 바인딩된 완성형 SQL, 슬로우 쿼리를 자동으로 수집해야 합니다.
 * **로그 보안 및 성능**: 실시간 로그 수집 시 민감정보(카드번호, 주민번호) 마스킹과 비동기 큐(`AsyncLogEventQueue`) 처리를 통한 요청 스레드 블로킹 방지가 필수적입니다.
-* **다중 런타임 지원**: 단일 Spring MVC뿐만 아니라 Netty TCP 통신 서버, Spring Batch 등 다양한 런타임의 추적 표준화가 필요합니다.
+* **다중 런타임 & 다중 ORM 지원**: Spring MVC, Netty TCP, Spring Batch 런타임뿐만 아니라 **MyBatis와 JPA(Hibernate) 환경 모두에서 동일한 수준의 SQL 추적**을 지원해야 합니다.
 
 ### 🎯 오픈소스 비전 & 제공 형태
 외부 개발자가 자신의 Spring Boot 애플리케이션에 손쉽게 도입할 수 있도록 표준 스타터 형태로 배포합니다.
 1. **JitPack / Maven Central 배포**: `implementation 'io.github.sweetpark:mini-apm-spring-boot-starter:1.0.0'`
 2. **Zero-Configuration 원칙**: `@ConditionalOnProperty(matchIfMissing = true)`로 설정 없이 즉시 동작하되, `application.yml`로 세부 튜닝 가능.
-3. **Grafana 대시보드 템플릿 번들**: Grafana / Alloy / Loki 환경에서 즉시 시각화할 수 있는 JSON 대시보드 템플릿 기본 제공.
+3. **ORM 자동 감지(MyBatis & JPA)**: 프로젝트에 포함된 의존성에 따라 MyBatis 인터셉터 또는 JDBC DataSource 프록시를 자동 활성화.
+4. **Grafana 대시보드 템플릿 번들**: Grafana / Alloy / Loki 환경에서 즉시 시각화할 수 있는 JSON 대시보드 템플릿 기본 제공.
 
 ---
 
-## 🔍 2. 원본 소스 및 이관 대상 (Source Reference)
+## 🧩 2. SQL 추적 아키텍처 (MyBatis & JPA 지원 설계)
+
+MyBatis와 JPA(Hibernate)의 실행 라이프사이클 차이를 반영하여, 환경에 맞게 최적화된 비침투 인터셉터를 조건부로 활성화합니다.
+
+```
+mini-apm-spring-boot-starter
+  ├── [MyBatis 환경 감지 시]
+  │     └─ SqlTraceInterceptor (MyBatis StatementHandler 가로채기)
+  │
+  ├── [JPA / Hibernate / JDBC 감지 시]
+  │     └─ JpaSqlTraceInterceptor (JDBC DataSource Proxy / PreparedStatement 가로채기)
+  │
+  └── [공통 로깅 파이프라인 (재사용)]
+        ├─ ErrorFingerprinter (SHA-256 예외 스택 해싱)
+        ├─ SensitiveDataMasker (정규식 기반 민감정보 마스킹)
+        └─ AsyncLogEventQueue (비동기 큐 기반 Non-blocking 로깅)
+```
+
+| 구분 | MyBatis 모드 | JPA (Hibernate / QueryDSL) 모드 |
+| :--- | :--- | :--- |
+| **인터셉트 지점** | `org.apache.ibatis.plugin.Interceptor` | `DataSource` Proxy (`PreparedStatement.execute()`) |
+| **추적 내용** | Mapper ID, 완성형 SQL, 파라미터, 실행 시간 | Repository/Entity, 실제 실행 SQL, 파라미터, 실행 시간 |
+| **슬로우 쿼리 감지**| `[SLOW_SQL]` 임계치 초과 시 자동 마킹 | 동일하게 `[SLOW_SQL]` 자동 마킹 |
+
+---
+
+## 🔍 3. 원본 소스 및 이관 대상 (Source Reference)
 
 | 구분 | 내용 |
 | :--- | :--- |
@@ -32,7 +59,7 @@
 
 ---
 
-## 🛠 3. 이관 및 리팩토링 기준 (Refactoring & Sanitization Rules)
+## 🛠 4. 이관 및 리팩토링 기준 (Refactoring & Sanitization Rules)
 
 새로운 세션에서 소스코드를 옮겨올 때 **반드시 준수해야 하는 기준**입니다.
 
@@ -48,20 +75,21 @@
 * 기존 `com.company.logging`을 표준 오픈소스 패키지로 리네이밍:
   * **Target Base Package**: `io.github.sweetpark.apm`
   * Core: `io.github.sweetpark.apm.core`
-  * Interceptors: `io.github.sweetpark.apm.interceptor`
+  * MyBatis Interceptor: `io.github.sweetpark.apm.interceptor.mybatis`
+  * JPA/JDBC Proxy: `io.github.sweetpark.apm.interceptor.jpa`
   * Netty/Batch: `io.github.sweetpark.apm.support.{netty,batch}`
 
 ### ③ 확장성 및 조건부 자동 구성 (Conditional Configuration)
-* `@ConditionalOnClass`를 세분화하여, 소비 프로젝트에 Netty나 Spring Batch, MyBatis 의존성이 없어도 NoClassDefFoundError 없이 안전하게 구동되도록 설계.
+* `@ConditionalOnClass`를 세분화하여, 소비 프로젝트에 Netty, Spring Batch, MyBatis, JPA 중 일부만 존재해도 `NoClassDefFoundError` 없이 안전하게 구동되도록 설계.
 
 ---
 
-## 🗺 4. 단계별 로드맵 (Roadmap to Public Release)
+## 🗺 5. 단계별 로드맵 (Roadmap to Public Release)
 
 ```mermaid
 graph LR
     P1["Phase 1<br/>레포 초기화 & 설계"] --> P2["Phase 2<br/>소스 이관 & 리팩토링"]
-    P2 --> P3["Phase 3<br/>검증 & 데모 구축"]
+    P2 --> P3["Phase 3<br/>JPA/MyBatis 검증"]
     P3 --> P4["Phase 4<br/>Public 오픈소스 전환"]
     style P1 fill:#238636,stroke:#fff,stroke-width:2px,color:#fff
     style P2 fill:#1f6feb,stroke:#fff,stroke-width:2px,color:#fff
@@ -71,17 +99,18 @@ graph LR
 
 ### 📌 Phase 1: Private 레포 생성 및 청사진 수립 (✅ 현재 단계)
 - [x] 오픈소스 지향 저장소(`mini-apm-spring-boot-starter`) 생성 (Private)
-- [x] 이관 가이드, 리팩토링 원칙, 아키텍처 비전이 담긴 README 작성
+- [x] 이관 가이드, 리팩토링 원칙, **MyBatis & JPA 동시 지원 아키텍처**가 담긴 README 작성
 
 ### 📌 Phase 2: 소스코드 이관 및 클렌징 (Next Session)
 - [ ] `wiezonSRC/APM-LOGGING-STARTER`에서 `logging-starter` 및 `test` 모듈 이관
 - [ ] 패키지명 변경 (`io.github.sweetpark.apm`)
 - [ ] 하드코딩된 사내 규격(IFID, 9999 에러코드 등)을 `application.yml` 프로퍼티 및 전략 패턴 인터페이스로 리팩토링
+- [ ] **JPA/Hibernate용 DataSource Proxy SQL 추적 모듈 추가** (`JpaSqlTraceInterceptor`)
 - [ ] `build.gradle`의 Maven Publishing 및 JitPack 빌드 스크립트 정비
 
 ### 📌 Phase 3: 테스트 및 데모 검증
-- [ ] Spring MVC, Netty TCP, Spring Batch 3개 환경별 통합 테스트 수행
-- [ ] `SqlTraceInterceptor` 파라미터 바인딩 및 슬로우 쿼리 감지 검증
+- [ ] Spring MVC, Netty TCP, Spring Batch 3개 런타임별 통합 테스트 수행
+- [ ] **MyBatis vs JPA(Hibernate) 각각의 SQL 파라미터 바인딩 및 슬로우 쿼리 감지 검증**
 - [ ] 비동기 큐(`AsyncLogEventQueue`) 부하 테스트 및 TPS 측정
 - [ ] Grafana 대시보드 템플릿(`grafana-dashboard.json`) 작성 및 동작 검증
 
@@ -97,5 +126,6 @@ graph LR
 ## 📋 다음 세션 작업자를 위한 체크리스트 (Action Items for Next Session)
 1. `wiezonSRC/APM-LOGGING-STARTER` 소스 복사 및 패키지 리네이밍 (`io.github.sweetpark.apm`)
 2. `LoggingProperties.java`에 커스텀 헤더/에러 판정 설정 추가
-3. `logging-starter-test` 실행하여 MVC / MyBatis / Netty 로깅 정상 동작 확인
-4. `./gradlew build` 및 `./gradlew publishToMavenLocal` 검증
+3. DataSource 프록시 기반의 JPA/JDBC SQL 인터셉터(`JpaSqlTraceInterceptor`) 추가
+4. `logging-starter-test`에 MyBatis 및 JPA 테스트 엔드포인트를 각각 두고 로깅 정상 동작 확인
+5. `./gradlew build` 및 `./gradlew publishToMavenLocal` 검증
