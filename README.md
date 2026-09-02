@@ -44,10 +44,13 @@
 
 ## 🚀 빠른 시작 (Quick Start)
 
-### 1. 의존성 추가 (Dependency)
+### 1. 의존성 추가 (Dependency: JitPack vs 로컬 Maven)
 
-#### JitPack 저장소 설정
-`mini-apm-spring-boot-starter`는 [JitPack](https://jitpack.io/#sweetpark/mini-apm-spring-boot-starter)을 통해 최신 태그 또는 특정 커밋을 직접 의존성으로 추가할 수 있습니다.
+프로젝트 환경에 따라 **① JitPack 원격 저장소** 또는 **② 소스 빌드 후 로컬 Maven(`mavenLocal()`)** 중 선택하여 의존성을 구성할 수 있습니다.
+
+#### 방법 A: JitPack 원격 저장소 사용 (외부 프로젝트 권장)
+별도 빌드 과정 없이 `build.gradle` 또는 `pom.xml`에 저장소와 의존성을 선언하여 즉시 사용합니다.  
+*(JitPack 의존성 GroupId: `com.github.sweetpark`)*
 
 ##### Gradle (Groovy)
 ```groovy
@@ -87,6 +90,56 @@ dependencies {
         <groupId>com.github.sweetpark</groupId>
         <artifactId>mini-apm-spring-boot-starter</artifactId>
         <version>v1.0.0</version>
+    </dependency>
+</dependencies>
+```
+
+---
+
+#### 방법 B: 소스 코드 클론 후 로컬 Maven(`mavenLocal()`) 직접 빌드/설치 (사내망/오프라인 권장)
+사내망, 오프라인 환경 또는 커스텀 패치를 직접 빌드하여 적용할 때는 소스를 클론하여 로컬 Maven 저장소(`~/.m2/repository`)에 배포 후 사용합니다.  
+*(로컬 빌드 GroupId: `io.github.sweetpark`)*
+
+##### 1) 스타터 저장소 클론 및 로컬 배포
+```bash
+git clone https://github.com/sweetpark/mini-apm-spring-boot-starter.git
+cd mini-apm-spring-boot-starter
+./gradlew publishToMavenLocal
+```
+> 빌드 완료 시 `~/.m2/repository/io/github/sweetpark/mini-apm-spring-boot-starter/1.0.0/` 경로에 `.jar` 및 `.pom` 파일이 자동 설치됩니다.
+
+##### 2) 내 프로젝트 설정
+**Gradle (Groovy)**:
+```groovy
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'io.github.sweetpark:mini-apm-spring-boot-starter:1.0.0'
+}
+```
+
+**Gradle (Kotlin DSL)**:
+```kotlin
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation("io.github.sweetpark:mini-apm-spring-boot-starter:1.0.0")
+}
+```
+
+**Maven (`pom.xml`)**:
+```xml
+<dependencies>
+    <dependency>
+        <groupId>io.github.sweetpark</groupId>
+        <artifactId>mini-apm-spring-boot-starter</artifactId>
+        <version>1.0.0</version>
     </dependency>
 </dependencies>
 ```

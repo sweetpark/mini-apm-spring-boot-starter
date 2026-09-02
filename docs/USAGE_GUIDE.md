@@ -1,12 +1,14 @@
 # 📖 mini-apm-spring-boot-starter 상세 사용 및 빌드 가이드 (Usage & Build Guide)
 
-본 문서는 `mini-apm-spring-boot-starter`의 설치, 빌드, 런타임별 설정 및 고급 사용법을 다룹니다.
+본 문서는 `mini-apm-spring-boot-starter`의 설치 방법(JitPack vs 로컬 Maven), 소스 빌드, 런타임별 설정 및 고급 사용법을 다룹니다.
 
 ---
 
 ## 📑 목차
-1. [라이브러리 설치 (JitPack / Maven)](#1-라이브러리-설치-jitpack--maven)
-2. [로컬 빌드 및 배포 방법 (Build from Source)](#2-로컬-빌드-및-배포-방법-build-from-source)
+1. [스타터 설치 방법 (Installation - JitPack vs Local Maven)](#1-스타터-설치-방법-installation)
+   - [방법 A: JitPack을 통한 의존성 추가 (외부 프로젝트 권장)](#방법-a-jitpack을-통한-의존성-추가-외부-프로젝트-도입-시-권장)
+   - [방법 B: 소스 빌드 후 로컬 Maven(`mavenLocal()`) 설치 (사내망/오프라인 권장)](#방법-b-소스-코드-클론-후-로컬-mavenmavenlocal-직접-빌드설치-사내망오프라인커스텀-패치-시)
+2. [소스 코드 빌드 및 품질 검증 (Build & Quality Gate)](#2-소스-코드-빌드-및-품질-검증-build--quality-gate)
 3. [런타임별 사용 가이드](#3-런타임별-사용-가이드)
    - [Spring MVC (Servlet) 환경](#31-spring-mvc-servlet-환경)
    - [MyBatis 환경](#32-mybatis-환경)
@@ -20,11 +22,18 @@
 
 ---
 
-## 1. 라이브러리 설치 (JitPack / Maven)
+## 1. 스타터 설치 방법 (Installation)
 
-`mini-apm-spring-boot-starter`는 JitPack을 통해 GitHub 릴리즈 태그 또는 특정 커밋을 직접 의존성으로 가져올 수 있습니다.
+`mini-apm-spring-boot-starter`를 프로젝트에 도입하는 방법은 **① JitPack 원격 저장소 사용**과 **② 소스 빌드 후 로컬 Maven(`mavenLocal()`) 사용** 2가지 방식이 지원됩니다.
 
-### Gradle (Groovy)
+---
+
+### 방법 A: JitPack을 통한 의존성 추가 (외부 프로젝트 도입 시 권장)
+별도의 소스 다운로드나 로컬 빌드 없이 Gradle / Maven 저장소 설정만으로 즉시 사용할 수 있습니다.
+
+> ⚠️ **주의 (GroupId)**: JitPack을 통해 의존성을 받을 때는 GroupId가 **`com.github.sweetpark`**입니다.
+
+#### Gradle (Groovy)
 `build.gradle`:
 ```groovy
 repositories {
@@ -33,12 +42,12 @@ repositories {
 }
 
 dependencies {
-    // 최신 릴리즈 태그 (예: v1.0.0) 또는 main-SNAPSHOT
+    // 최신 릴리즈 태그 (예: v1.0.0) 또는 특정 커밋 해시
     implementation 'com.github.sweetpark:mini-apm-spring-boot-starter:v1.0.0'
 }
 ```
 
-### Gradle (Kotlin DSL)
+#### Gradle (Kotlin DSL)
 `build.gradle.kts`:
 ```kotlin
 repositories {
@@ -51,7 +60,7 @@ dependencies {
 }
 ```
 
-### Maven (`pom.xml`)
+#### Maven (`pom.xml`)
 ```xml
 <repositories>
     <repository>
@@ -71,37 +80,24 @@ dependencies {
 
 ---
 
-## 2. 로컬 빌드 및 배포 방법 (Build from Source)
+### 방법 B: 소스 코드 클론 후 로컬 Maven(`mavenLocal()`) 직접 빌드/설치 (사내망/오프라인/커스텀 패치 시)
+사내망, 오프라인 환경 또는 스타터 소스를 직접 수정하여 사용할 때는 로컬 Maven 저장소(`~/.m2/repository`)에 직접 빌드 및 설치하여 사용할 수 있습니다.
 
-직접 소스 코드를 내려받아 빌드하거나 로컬 Maven 저장소(`~/.m2/repository`)에 설치하여 테스트할 수 있습니다.
+> 💡 **안내 (GroupId)**: 소스에서 로컬 빌드 시 공식 GroupId인 **`io.github.sweetpark`**가 사용됩니다.
 
-### 사전 요구사항
-- **JDK 17** 이상 (Java 17, 21 권장)
-- 별도의 Gradle 설치 불필요 (프로젝트에 번들된 `./gradlew` Wrapper 사용)
-
-### 빌드 및 테스트 실행
+#### 1단계: 스타터 소스 클론 및 로컬 배포
 ```bash
 # 1. 저장소 복제
 git clone https://github.com/sweetpark/mini-apm-spring-boot-starter.git
 cd mini-apm-spring-boot-starter
 
-# 2. 코드 스타일 포맷팅 적용 (Google Java Format)
-./gradlew spotlessApply
-
-# 3. 전체 단위/통합 테스트 및 정적 분석(SpotBugs) 실행
-./gradlew check
-
-# 4. JaCoCo 테스트 커버리지 리포트 생성
-./gradlew jacocoTestReport
-# 리포트 위치: build/reports/jacoco/test/html/index.html
-```
-
-### 로컬 Maven 저장소로 배포 (`publishToMavenLocal`)
-로컬 환경의 다른 프로젝트에서 즉시 참조할 수 있도록 빌드 및 로컬 설치를 수행합니다:
-```bash
+# 2. 로컬 Maven 저장소(~/.m2/repository)에 배포
 ./gradlew publishToMavenLocal
 ```
-이후 다른 프로젝트의 `build.gradle`에 `mavenLocal()` 저장소를 추가하고 사용할 수 있습니다:
+> 빌드 완료 시 `~/.m2/repository/io/github/sweetpark/mini-apm-spring-boot-starter/1.0.0/` 경로에 `.jar` 및 `.pom` 파일이 자동 설치됩니다.
+
+#### 2단계: 내 애플리케이션 프로젝트 설정
+**Gradle (Groovy)**:
 ```groovy
 repositories {
     mavenLocal()
@@ -111,6 +107,52 @@ repositories {
 dependencies {
     implementation 'io.github.sweetpark:mini-apm-spring-boot-starter:1.0.0'
 }
+```
+
+**Gradle (Kotlin DSL)**:
+```kotlin
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation("io.github.sweetpark:mini-apm-spring-boot-starter:1.0.0")
+}
+```
+
+**Maven (`pom.xml`)**:
+```xml
+<dependencies>
+    <dependency>
+        <groupId>io.github.sweetpark</groupId>
+        <artifactId>mini-apm-spring-boot-starter</artifactId>
+        <version>1.0.0</version>
+    </dependency>
+</dependencies>
+```
+
+---
+
+## 2. 소스 코드 빌드 및 품질 검증 (Build & Quality Gate)
+
+직접 소스 코드를 내려받아 빌드하거나 품질 게이트를 검증할 때 사용합니다.
+
+### 사전 요구사항
+- **JDK 17** 이상 (Java 17, 21 권장)
+- 별도의 Gradle 설치 불필요 (프로젝트에 번들된 `./gradlew` Wrapper 사용)
+
+### 빌드 및 테스트 실행
+```bash
+# 1. 코드 스타일 포맷팅 적용 (Google Java Format)
+./gradlew spotlessApply
+
+# 2. 전체 단위/통합 테스트, 정적 분석(SpotBugs) 및 커버리지 게이트 검증
+./gradlew check
+
+# 3. JaCoCo 테스트 커버리지 리포트 생성
+./gradlew jacocoTestReport
+# 리포트 위치: build/reports/jacoco/test/html/index.html
 ```
 
 ---
