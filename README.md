@@ -1,5 +1,15 @@
 # 🚀 mini-apm-spring-boot-starter
 
+<p align="center">
+  <img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License" />
+  <img src="https://img.shields.io/badge/Java-17%2B-orange.svg" alt="Java 17+" />
+  <img src="https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen.svg" alt="Spring Boot 3.x" />
+  <img src="https://img.shields.io/badge/Code%20Style-Google%20Java%20Format-brightgreen.svg" alt="Spotless" />
+  <img src="https://img.shields.io/badge/Static%20Analysis-SpotBugs-yellow.svg" alt="SpotBugs" />
+  <img src="https://img.shields.io/badge/Coverage-100%25%20(Core)-success.svg" alt="Coverage" />
+  <img src="https://img.shields.io/badge/AI%20Review-CodeRabbit-purple.svg" alt="CodeRabbit" />
+</p>
+
 > **Lightweight Non-Invasive Observability & APM Starter for Spring Boot**  
 > 별도의 복잡한 에이전트 설치 없이 의존성 추가(`@AutoConfiguration`)만으로 SQL 실행 시간 측정, 예외 지문 해싱, 민감정보 마스킹, 비동기 로깅 및 Grafana/Loki 연동을 일괄 제공하는 경량 APM 라이브러리입니다.
 
@@ -48,7 +58,21 @@ mini-apm-spring-boot-starter
 
 ---
 
-## 🔍 3. 원본 소스 및 이관 대상 (Source Reference)
+## 🛡 3. Sweetpark 오픈소스 표준 품질 게이트 & CI/CD 파이프라인
+
+본 프로젝트는 `sweetpark` 오픈소스 표준 품질 관리 체계를 따릅니다.
+
+| 도구 | 역할 | 검증 방식 |
+| :--- | :--- | :--- |
+| **Spotless** | Google Java Format 스타일 자동 포맷팅 | `./gradlew spotlessCheck` (적용: `spotlessApply`) |
+| **SpotBugs** | Java 바이트코드 레벨 잠재적 버그/NPE 정적 분석 | `./gradlew spotbugsMain` |
+| **JaCoCo** | 핵심 파서/인터셉터 모듈 **100% 라인 커버리지** 강제화 | `./gradlew jacocoTestCoverageVerification` |
+| **CodeRabbit AI** | PR 등록 시 변경 diff 자동 AI 코드 리뷰 | GitHub PR Webhook 연동 |
+| **GitHub Actions** | Push/PR 시 자동 빌드, 테스트, Step Summary 리포트 발행 | `.github/workflows/ci.yml` |
+
+---
+
+## 🔍 4. 원본 소스 및 이관 대상 (Source Reference)
 
 | 구분 | 내용 |
 | :--- | :--- |
@@ -59,7 +83,7 @@ mini-apm-spring-boot-starter
 
 ---
 
-## 🛠 4. 이관 및 리팩토링 기준 (Refactoring & Sanitization Rules)
+## 🛠 5. 이관 및 리팩토링 기준 (Refactoring & Sanitization Rules)
 
 새로운 세션에서 소스코드를 옮겨올 때 **반드시 준수해야 하는 기준**입니다.
 
@@ -84,29 +108,53 @@ mini-apm-spring-boot-starter
 
 ---
 
-## 🗺 5. 단계별 로드맵 (Roadmap to Public Release)
+## 📚 6. 오픈소스 필수 표준 6종 문서 구축 계획
+
+이관 시 다음 6종 문서를 생성합니다:
+1. `LICENSE` (Apache License 2.0)
+2. `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1)
+3. `CONTRIBUTING.md` (기여 가이드, 브랜치 전략, 100% 커버리지 룰)
+4. `docs/ARCHITECTURE.md` (Spring Boot AutoConfiguration 및 인터셉터 흐름 다이어그램)
+5. `docs/CONVENTIONS.md` (Spotless, SpotBugs, Conventional Commits)
+6. `README.md` (공식 뱃지, 퀵스타트, Grafana 연동 가이드)
+
+---
+
+## ⚙️ 7. GitHub 저장소 설정 (Repository Settings Checklist)
+
+* [ ] **Visibility**: `Settings` ➔ Danger Zone ➔ **`Make public`**
+* [ ] **PR 머지 시 브랜치 자동 삭제**: `Settings` ➔ `General` ➔ `Pull Requests` ➔ ✅ **`Automatically delete head branches`** 체크
+* [ ] **`main` 브랜치 보호 룰**: `Settings` ➔ `Branches` ➔ `Add branch protection rule` (`main`)
+  - ✅ `Require a pull request before merging` (Approvals: 1)
+  - ✅ `Require status checks to pass before merging` (Status check: `Test & 100% Coverage Verification`)
+  - ✅ `Require conversation resolution before merging`
+* [ ] **CodeRabbit AI 연동**: [CodeRabbit.ai](https://coderabbit.ai/)에서 저장소 연동 및 `Chill` 프로필 설정
+
+---
+
+## 🗺 8. 단계별 로드맵 (Roadmap to Public Release)
 
 ```mermaid
 graph LR
     P1["Phase 1<br/>레포 초기화 & 설계"] --> P2["Phase 2<br/>소스 이관 & 리팩토링"]
     P2 --> P3["Phase 3<br/>JPA/MyBatis 검증"]
-    P3 --> P4["Phase 4<br/>Public 오픈소스 전환"]
+    P3 --> P4["Phase 4<br/>Public 오픈소스 배포"]
     style P1 fill:#238636,stroke:#fff,stroke-width:2px,color:#fff
     style P2 fill:#1f6feb,stroke:#fff,stroke-width:2px,color:#fff
     style P3 fill:#8957e5,stroke:#fff,stroke-width:2px,color:#fff
     style P4 fill:#d29922,stroke:#fff,stroke-width:2px,color:#fff
 ```
 
-### 📌 Phase 1: Private 레포 생성 및 청사진 수립 (✅ 현재 단계)
+### 📌 Phase 1: Private 레포 생성 및 청사진 수립 (✅ 완료)
 - [x] 오픈소스 지향 저장소(`mini-apm-spring-boot-starter`) 생성 (Private)
-- [x] 이관 가이드, 리팩토링 원칙, **MyBatis & JPA 동시 지원 아키텍처**가 담긴 README 작성
+- [x] 이관 가이드, 리팩토링 원칙, **MyBatis & JPA 동시 지원 아키텍처** 및 품질 플레이북이 담긴 README 작성
 
 ### 📌 Phase 2: 소스코드 이관 및 클렌징 (Next Session)
 - [ ] `wiezonSRC/APM-LOGGING-STARTER`에서 `logging-starter` 및 `test` 모듈 이관
 - [ ] 패키지명 변경 (`io.github.sweetpark.apm`)
 - [ ] 하드코딩된 사내 규격(IFID, 9999 에러코드 등)을 `application.yml` 프로퍼티 및 전략 패턴 인터페이스로 리팩토링
 - [ ] **JPA/Hibernate용 DataSource Proxy SQL 추적 모듈 추가** (`JpaSqlTraceInterceptor`)
-- [ ] `build.gradle`의 Maven Publishing 및 JitPack 빌드 스크립트 정비
+- [ ] Spotless, SpotBugs, JaCoCo 100% 라인 커버리지 룰 구성
 
 ### 📌 Phase 3: 테스트 및 데모 검증
 - [ ] Spring MVC, Netty TCP, Spring Batch 3개 런타임별 통합 테스트 수행
@@ -114,12 +162,11 @@ graph LR
 - [ ] 비동기 큐(`AsyncLogEventQueue`) 부하 테스트 및 TPS 측정
 - [ ] Grafana 대시보드 템플릿(`grafana-dashboard.json`) 작성 및 동작 검증
 
-### 📌 Phase 4: Public 오픈소스 전환 준비
-- [ ] 오픈소스 라이선스 확정 (Apache License 2.0 또는 MIT)
-- [ ] `LICENSE`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` 추가
-- [ ] GitHub Actions CI (빌드, 테스트, JitPack 릴리즈 자동화) 구축
-- [ ] README 최종 갱신 (아키텍처 다이어그램, 벤치마크, Quick Start 가이드)
-- [ ] **저장소 Public 전환 (공개 오픈소스화)**
+### 📌 Phase 4: Public 오픈소스 전환 및 배포
+- [ ] `LICENSE` (Apache 2.0), `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `docs/` 추가
+- [ ] GitHub Actions CI (`.github/workflows/ci.yml`, `release.yml`) 및 PR 템플릿 추가
+- [ ] CodeRabbit AI 연동 및 Branch Protection 설정
+- [ ] **저장소 Public 전환 및 Maven Central / JitPack 배포**
 
 ---
 
@@ -127,5 +174,5 @@ graph LR
 1. `wiezonSRC/APM-LOGGING-STARTER` 소스 복사 및 패키지 리네이밍 (`io.github.sweetpark.apm`)
 2. `LoggingProperties.java`에 커스텀 헤더/에러 판정 설정 추가
 3. DataSource 프록시 기반의 JPA/JDBC SQL 인터셉터(`JpaSqlTraceInterceptor`) 추가
-4. `logging-starter-test`에 MyBatis 및 JPA 테스트 엔드포인트를 각각 두고 로깅 정상 동작 확인
-5. `./gradlew build` 및 `./gradlew publishToMavenLocal` 검증
+4. Spotless, SpotBugs, JaCoCo 100% 라인 커버리지 연동 (`./gradlew check`)
+5. GitHub Actions CI (`.github/workflows/ci.yml`) 및 PR 템플릿 추가 후 PR 생성
