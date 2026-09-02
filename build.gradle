@@ -21,7 +21,15 @@ repositories {
     mavenCentral()
 }
 
-def springBootVersion = '3.2.1'
+ext {
+    springBootVersion = '3.2.1'
+    springVersion = '6.1.2'
+    springBatchVersion = '5.1.0'
+    slf4jVersion = '2.0.9'
+    logbackVersion = '1.4.14'
+    jacksonVersion = '2.15.3'
+    servletApiVersion = '6.0.0'
+}
 
 dependencyManagement {
     imports {
@@ -34,21 +42,22 @@ dependencies {
     api "org.springframework.boot:spring-boot-autoconfigure:${springBootVersion}"
     compileOnly "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
     compileOnly "org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}"
-    compileOnly 'org.springframework:spring-web'
-    compileOnly 'org.springframework:spring-jdbc'
+    compileOnly "org.springframework.boot:spring-boot-starter-jdbc:${springBootVersion}"
+    compileOnly "org.springframework:spring-web:${springVersion}"
+    compileOnly "org.springframework:spring-jdbc:${springVersion}"
 
     /* ===== Logging & Observability ===== */
-    compileOnly 'org.slf4j:slf4j-api'
-    compileOnly 'ch.qos.logback:logback-classic'
+    compileOnly "org.slf4j:slf4j-api:${slf4jVersion}"
+    compileOnly "ch.qos.logback:logback-classic:${logbackVersion}"
 
     /* ===== JSON Processing ===== */
-    compileOnly 'com.fasterxml.jackson.core:jackson-databind'
+    compileOnly "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
 
     /* ===== Optional / Supported Runtimes ===== */
     compileOnly 'io.netty:netty-all:4.1.100.Final'
-    compileOnly 'org.springframework.batch:spring-batch-core'
+    compileOnly "org.springframework.batch:spring-batch-core:${springBatchVersion}"
     compileOnly 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
-    compileOnly 'jakarta.servlet:jakarta.servlet-api'
+    compileOnly "jakarta.servlet:jakarta.servlet-api:${servletApiVersion}"
 
     /* ===== SpotBugs Annotations ===== */
     compileOnly 'com.github.spotbugs:spotbugs-annotations:4.8.3'
@@ -57,6 +66,7 @@ dependencies {
     testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
     testImplementation "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
     testImplementation "org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}"
+    testImplementation "org.springframework.boot:spring-boot-starter-batch:${springBootVersion}"
     testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
     testImplementation 'com.h2database:h2'
 }
