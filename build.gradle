@@ -21,20 +21,21 @@ repositories {
     mavenCentral()
 }
 
+def springBootVersion = '3.2.1'
+
 dependencyManagement {
     imports {
-        mavenBom "org.springframework.boot:spring-boot-dependencies:3.2.1"
+        mavenBom "org.springframework.boot:spring-boot-dependencies:${springBootVersion}"
     }
 }
 
 dependencies {
     /* ===== Spring Core & Boot ===== */
-    api 'org.springframework.boot:spring-boot-autoconfigure'
+    api "org.springframework.boot:spring-boot-autoconfigure:${springBootVersion}"
+    compileOnly "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
+    compileOnly "org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}"
     compileOnly 'org.springframework:spring-web'
     compileOnly 'org.springframework:spring-jdbc'
-    compileOnly 'org.springframework.boot:spring-boot-starter-web'
-    compileOnly 'org.springframework.boot:spring-boot-starter-aop'
-    compileOnly 'org.springframework.boot:spring-boot-starter-data-jpa'
 
     /* ===== Logging & Observability ===== */
     compileOnly 'org.slf4j:slf4j-api'
@@ -53,9 +54,9 @@ dependencies {
     compileOnly 'com.github.spotbugs:spotbugs-annotations:4.8.3'
 
     /* ===== Unit Testing ===== */
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-web'
-    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
+    testImplementation "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
+    testImplementation "org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}"
     testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
     testImplementation 'com.h2database:h2'
 }

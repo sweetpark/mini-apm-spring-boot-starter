@@ -253,6 +253,7 @@ apm:
 ## 🏗️ 아키텍처 상세 & 개발자 가이드
 
 - [상세 사용 및 런타임별 설정 가이드 (docs/USAGE_GUIDE.md)](docs/USAGE_GUIDE.md)
+- [자동 릴리즈 및 배포 파이프라인 가이드 (docs/RELEASE_WORKFLOW.md)](docs/RELEASE_WORKFLOW.md)
 - [아키텍처 및 내부 라이프사이클 설계 (docs/ARCHITECTURE.md)](docs/ARCHITECTURE.md)
 - [품질 게이트 및 코드 컨벤션 가이드 (docs/CONVENTIONS.md)](docs/CONVENTIONS.md)
 - [오픈소스 기여 가이드 (CONTRIBUTING.md)](CONTRIBUTING.md)
