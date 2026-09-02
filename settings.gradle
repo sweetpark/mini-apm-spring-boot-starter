@@ -1,0 +1,2 @@
+rootProject.name = 'mini-apm-spring-boot-starter'
+include 'mini-apm-spring-boot-starter-test'

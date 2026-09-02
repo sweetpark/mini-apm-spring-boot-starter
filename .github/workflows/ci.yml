@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v3
+
+      - name: Spotless Code Formatting Check
+        run: ./gradlew spotlessCheck --no-daemon
+
+      - name: Compile and Test
+        run: ./gradlew test --no-daemon
+
+      - name: SpotBugs Static Analysis
+        run: ./gradlew spotbugsMain --no-daemon
+
+      - name: JaCoCo Coverage Verification
+        run: ./gradlew jacocoTestReport jacocoTestCoverageVerification --no-daemon
+
+      - name: Upload JaCoCo Coverage Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: build/reports/jacoco/test/html/

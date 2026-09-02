@@ -1,4 +1,4 @@
-name: 🐛 Bug Report
+ame: 🐛 Bug Report
 description: 발생한 버그나 비정상 동작을 제보합니다.
 title: "[BUG]: "
 labels: ["bug", "triage"]

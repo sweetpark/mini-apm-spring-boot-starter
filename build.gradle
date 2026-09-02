@@ -1,0 +1,159 @@
+plugins {
+    id 'java-library'
+    id 'org.springframework.boot' version '3.2.1' apply false
+    id 'io.spring.dependency-management' version '1.1.4'
+    id 'maven-publish'
+    id 'jacoco'
+    id 'com.diffplug.spotless' version '6.25.0'
+    id 'com.github.spotbugs' version '6.0.14'
+}
+
+group = 'io.github.sweetpark'
+version = '1.0.0'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.boot:spring-boot-dependencies:3.2.1"
+    }
+}
+
+dependencies {
+    /* ===== Spring Core & Boot ===== */
+    api 'org.springframework.boot:spring-boot-autoconfigure'
+    compileOnly 'org.springframework:spring-web'
+    compileOnly 'org.springframework:spring-jdbc'
+    compileOnly 'org.springframework.boot:spring-boot-starter-web'
+    compileOnly 'org.springframework.boot:spring-boot-starter-aop'
+    compileOnly 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    /* ===== Logging & Observability ===== */
+    compileOnly 'org.slf4j:slf4j-api'
+    compileOnly 'ch.qos.logback:logback-classic'
+
+    /* ===== JSON Processing ===== */
+    compileOnly 'com.fasterxml.jackson.core:jackson-databind'
+
+    /* ===== Optional / Supported Runtimes ===== */
+    compileOnly 'io.netty:netty-all:4.1.100.Final'
+    compileOnly 'org.springframework.batch:spring-batch-core'
+    compileOnly 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
+    compileOnly 'jakarta.servlet:jakarta.servlet-api'
+
+    /* ===== SpotBugs Annotations ===== */
+    compileOnly 'com.github.spotbugs:spotbugs-annotations:4.8.3'
+
+    /* ===== Unit Testing ===== */
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-web'
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
+    testImplementation 'com.h2database:h2'
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+    finalizedBy jacocoTestReport
+}
+
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+    }
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                '**/ApmCoreAutoConfiguration*',
+                '**/ApmJpaAutoConfiguration*',
+                '**/ApmMybatisAutoConfiguration*',
+                '**/ApmWebAutoConfiguration*',
+                '**/ApmNettyAutoConfiguration*',
+                '**/ApmBatchAutoConfiguration*'
+            ])
+        }))
+    }
+}
+
+jacocoTestCoverageVerification {
+    dependsOn jacocoTestReport
+    violationRules {
+        rule {
+            element = 'CLASS'
+            includes = [
+                'io.github.sweetpark.apm.core.support.util.*',
+                'io.github.sweetpark.apm.core.error.*'
+            ]
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.85
+            }
+        }
+    }
+}
+
+check.dependsOn jacocoTestCoverageVerification
+
+spotless {
+    java {
+        googleJavaFormat('1.18.1').reflowLongStrings()
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}
+
+spotbugs {
+    ignoreFailures = true
+    excludeFilter = file("${project.rootDir}/config/spotbugs/exclude.xml")
+}
+
+tasks.withType(GenerateModuleMetadata).configureEach {
+    enabled = false
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            pom {
+                name = 'mini-apm-spring-boot-starter'
+                description = 'Lightweight Non-Invasive Observability & APM Starter for Spring Boot'
+                url = 'https://github.com/sweetpark/mini-apm-spring-boot-starter'
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'sweetpark'
+                        name = 'sweetpark'
+                        email = 'dev@sweetpark.io'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/sweetpark/mini-apm-spring-boot-starter.git'
+                    developerConnection = 'scm:git:ssh://github.com:sweetpark/mini-apm-spring-boot-starter.git'
+                    url = 'https://github.com/sweetpark/mini-apm-spring-boot-starter'
+                }
+            }
+        }
+    }
+}

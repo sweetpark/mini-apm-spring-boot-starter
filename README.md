@@ -1,178 +1,232 @@
 # 🚀 mini-apm-spring-boot-starter
 
 <p align="center">
+  <a href="https://jitpack.io/#sweetpark/mini-apm-spring-boot-starter"><img src="https://jitpack.io/v/sweetpark/mini-apm-spring-boot-starter.svg" alt="JitPack" /></a>
   <img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License" />
   <img src="https://img.shields.io/badge/Java-17%2B-orange.svg" alt="Java 17+" />
   <img src="https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen.svg" alt="Spring Boot 3.x" />
   <img src="https://img.shields.io/badge/Code%20Style-Google%20Java%20Format-brightgreen.svg" alt="Spotless" />
   <img src="https://img.shields.io/badge/Static%20Analysis-SpotBugs-yellow.svg" alt="SpotBugs" />
   <img src="https://img.shields.io/badge/Coverage-100%25%20(Core)-success.svg" alt="Coverage" />
-  <img src="https://img.shields.io/badge/AI%20Review-CodeRabbit-purple.svg" alt="CodeRabbit" />
+  <img src="https://img.shields.io/badge/Build-Passing-brightgreen.svg" alt="Build" />
 </p>
 
 > **Lightweight Non-Invasive Observability & APM Starter for Spring Boot**  
-> 별도의 복잡한 에이전트 설치 없이 의존성 추가(`@AutoConfiguration`)만으로 SQL 실행 시간 측정, 예외 지문 해싱, 민감정보 마스킹, 비동기 로깅 및 Grafana/Loki 연동을 일괄 제공하는 경량 APM 라이브러리입니다.
+> 별도의 무거운 APM 에이전트(Bytecode Weaver/Agent) 설치 없이 의존성 추가(`@AutoConfiguration`)만으로  
+> **SQL 실행 시간 측정, 파라미터 완성형 SQL, N+1 쿼리 감지, 예외 지문 해싱, 민감정보 마스킹, 비동기 로깅 및 Grafana/Loki 연동**을 일괄 제공하는 오픈소스 경량 APM 스타터입니다.
 
 ---
 
-## 📌 1. 프로젝트 개요 & 오픈소스 비전 (Open Source Vision)
+## 📌 주요 특징 (Key Features)
 
-### 💡 왜 이 라이브러리가 필요한가? (Problem Statement)
-* **무거운 APM 에이전트 부담**: Pinpoint, Datadog, Scouter 등 대형 APM 도구는 인프라 비용과 설정 복잡도가 큽니다.
-* **비즈니스 코드 침투 없는 모니터링**: 코드 수정 없이 SQL 실행 시간(`0.001ms` 정밀도), 파라미터가 바인딩된 완성형 SQL, 슬로우 쿼리를 자동으로 수집해야 합니다.
-* **로그 보안 및 성능**: 실시간 로그 수집 시 민감정보(카드번호, 주민번호) 마스킹과 비동기 큐(`AsyncLogEventQueue`) 처리를 통한 요청 스레드 블로킹 방지가 필수적입니다.
-* **다중 런타임 & 다중 ORM 지원**: Spring MVC, Netty TCP, Spring Batch 런타임뿐만 아니라 **MyBatis와 JPA(Hibernate) 환경 모두에서 동일한 수준의 SQL 추적**을 지원해야 합니다.
-
-### 🎯 오픈소스 비전 & 제공 형태
-외부 개발자가 자신의 Spring Boot 애플리케이션에 손쉽게 도입할 수 있도록 표준 스타터 형태로 배포합니다.
-1. **JitPack / Maven Central 배포**: `implementation 'io.github.sweetpark:mini-apm-spring-boot-starter:1.0.0'`
-2. **Zero-Configuration 원칙**: `@ConditionalOnProperty(matchIfMissing = true)`로 설정 없이 즉시 동작하되, `application.yml`로 세부 튜닝 가능.
-3. **ORM 자동 감지(MyBatis & JPA)**: 프로젝트에 포함된 의존성에 따라 MyBatis 인터셉터 또는 JDBC DataSource 프록시를 자동 활성화.
-4. **Grafana 대시보드 템플릿 번들**: Grafana / Alloy / Loki 환경에서 즉시 시각화할 수 있는 JSON 대시보드 템플릿 기본 제공.
+- **비침투성 (Non-Invasive)**: 비즈니스 코드에 애노테이션이나 수동 로깅 코드 수정 없이 100% 자동 계측.
+- **다중 런타임 지원**:
+  - **Spring Web (Servlet / MVC)**: ContentCaching 기반 요청/응답 본문, HTTP 상태, 레이턴시 기록.
+  - **Netty TCP**: Netty `ChannelDuplexHandler` 기반 인바운드/아웃바운드 패킷 트레이싱.
+  - **Spring Batch**: Job & Step Execution 리스너 및 멀티스레드 스텝용 `TaskDecorator` 컨텍스트 전파.
+- **Dual ORM 완벽 지원 (MyBatis & JPA/Hibernate)**:
+  - MyBatis: `SqlTraceInterceptor` (MappedStatement, 파라미터 바인딩, 슬로우 쿼리 감지).
+  - JPA / Hibernate / JDBC: `ApmProxyDataSource` & `ApmProxyPreparedStatement` (실제 실행 SQL 및 파라미터 로깅).
+  - **스마트 중복 방지 (De-duplication)**: 동일 트랜잭션/스레드에서 MyBatis와 JPA가 동시 실행될 때 MyBatis 인터셉터가 우선 실행되고 JDBC 프록시는 자동으로 추적을 양보하여 중복 로깅을 원천 차단.
+- **N+1 쿼리 감지 (N+1 Query Detection)**: 동일 요청/트랜잭션 내에서 동일 SQL ID가 임계치(`apm.limit.n1-detection-threshold`, 기본 3회) 이상 반복 실행되면 즉시 `[N1_QUERY]` 경고 마킹.
+- **스마트 에러 지문 해싱 (SHA-256 Error Fingerprinter)**:
+  - 프레임워크 보일러플레이트 스택을 필터링하고 애플리케이션 핵심 스택 트레이스만 추출하여 고유한 12자리 SHA-256 해시 생성.
+  - 동일한 원인의 에러를 Grafana Loki에서 단일 지문(`error_fingerprint`)으로 손쉽게 집계(Aggregation) 가능.
+- **민감정보 자동 마스킹 (Sensitive Data Masking)**:
+  - 신용카드 번호(15~16자리), 주민등록번호(RRN 13자리), 이메일 주소, 전화번호를 고속 정규식으로 안전하게 치환(`*`).
+  - 요청/응답 Body 및 SQL 바인딩 파라미터에 선택적으로 적용 가능.
+- **OOM 방지 메모리 가드 (OOM Prevention Limits)**:
+  - SQL 개수 제한, 세부 쿼리 저장 개수 제한, Body 길이 제한, 스택 트레이스 깊이 제한을 통해 트래픽 폭주 시에도 메모리 안전성 보장.
+- **Grafana Loki & logfmt 최적화**:
+  - `key=value` 형태의 표준 logfmt 구조 및 SLF4J Marker로 출력되어 Loki 레이블 추출 및 LogQL 쿼리 성능 극대화.
 
 ---
 
-## 🧩 2. SQL 추적 아키텍처 (MyBatis & JPA 지원 설계)
+## 🚀 빠른 시작 (Quick Start)
 
-MyBatis와 JPA(Hibernate)의 실행 라이프사이클 차이를 반영하여, 환경에 맞게 최적화된 비침투 인터셉터를 조건부로 활성화합니다.
+### 1. 의존성 추가 (Dependency)
 
+#### JitPack 저장소 설정
+`mini-apm-spring-boot-starter`는 [JitPack](https://jitpack.io/#sweetpark/mini-apm-spring-boot-starter)을 통해 최신 태그 또는 특정 커밋을 직접 의존성으로 추가할 수 있습니다.
+
+##### Gradle (Groovy)
+```groovy
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    implementation 'com.github.sweetpark:mini-apm-spring-boot-starter:v1.0.0'
+}
 ```
-mini-apm-spring-boot-starter
-  ├── [MyBatis 환경 감지 시]
-  │     └─ SqlTraceInterceptor (MyBatis StatementHandler 가로채기)
-  │
-  ├── [JPA / Hibernate / JDBC 감지 시]
-  │     └─ JpaSqlTraceInterceptor (JDBC DataSource Proxy / PreparedStatement 가로채기)
-  │
-  └── [공통 로깅 파이프라인 (재사용)]
-        ├─ ErrorFingerprinter (SHA-256 예외 스택 해싱)
-        ├─ SensitiveDataMasker (정규식 기반 민감정보 마스킹)
-        └─ AsyncLogEventQueue (비동기 큐 기반 Non-blocking 로깅)
+
+##### Gradle (Kotlin DSL)
+```kotlin
+repositories {
+    mavenCentral()
+    maven("https://jitpack.io")
+}
+
+dependencies {
+    implementation("com.github.sweetpark:mini-apm-spring-boot-starter:v1.0.0")
+}
 ```
 
-| 구분 | MyBatis 모드 | JPA (Hibernate / QueryDSL) 모드 |
+##### Maven (`pom.xml`)
+```xml
+<repositories>
+    <repository>
+        <id>jitpack.io</id>
+        <url>https://jitpack.io</url>
+    </repository>
+</repositories>
+
+<dependencies>
+    <dependency>
+        <groupId>com.github.sweetpark</groupId>
+        <artifactId>mini-apm-spring-boot-starter</artifactId>
+        <version>v1.0.0</version>
+    </dependency>
+</dependencies>
+```
+
+---
+
+### 2. 기본 설정 (`application.yml`)
+
+Zero-Configuration을 지향하므로 별도 설정 없이도 즉시 동작합니다. 세부 동작을 조정하려면 아래 설정을 추가하세요:
+
+```yaml
+apm:
+  enabled: true
+  trace:
+    level: PROD                 # PROD (경량 레이턴시/상태만), TRACE (상세 바디/SQL)
+    header-name: X-Trace-Id     # 클라이언트 전파 헤더 (미입력 시 W3C traceparent 또는 UUID 자동 생성)
+  slow:
+    api-ms: 1000                # API 응답 지연 임계치 (1000ms 초과 시 경고)
+    query:
+      ms: 300                   # 단일 SQL 슬로우 쿼리 임계치 (ms)
+      total-ms: 1000            # 요청당 누적 SQL 시간 임계치 (ms)
+  capture:
+    body: ERROR                 # ALWAYS, ERROR, SLOW, SAMPLE, OFF
+    sql: SLOW                   # ALWAYS, ERROR, SLOW, SAMPLE, OFF
+    sample-rate: 0.01           # SAMPLE 모드 시 샘플링 비율 (1%)
+  security:
+    masking-enabled: true       # 카드번호, 주민번호, 이메일, 전화번호 자동 마스킹
+    mask-body: true
+    mask-sql-param: true
+  limit:
+    max-sql-count: 100          # 요청당 최대 수집 SQL 수
+    max-body-length: 2000       # 캡처할 최대 Body 길이
+    n1-detection-threshold: 3   # N+1 쿼리 감지 임계치
+```
+
+---
+
+## ⚙️ 상세 설정 참조 (Configuration Reference)
+
+| 설정 프로퍼티 | 기본값 | 설명 |
+| :--- | :---: | :--- |
+| `apm.enabled` | `true` | APM 기능 전체 활성화 여부 |
+| `apm.trace.level` | `PROD` | 로깅 레벨 (`PROD`, `TRACE`) |
+| `apm.trace.header-name` | `X-Trace-Id` | 트레이스 ID HTTP 요청/응답 헤더명 |
+| `apm.trace.interface-header-name` | `X-Interface-Id` | 인터페이스 ID 식별 헤더명 |
+| `apm.slow.api-ms` | `1000` | API 슬로우 응답 판정 임계치 (ms) |
+| `apm.slow.query.ms` | `300` | 개별 SQL 슬로우 쿼리 판정 임계치 (ms) |
+| `apm.slow.query.total-ms` | `1000` | 요청 내 전체 SQL 누적 시간 초과 임계치 (ms) |
+| `apm.capture.body` | `ERROR` | 요청/응답 본문 캡처 전략 (`ALWAYS`, `ERROR`, `SLOW`, `SAMPLE`, `OFF`) |
+| `apm.capture.sql` | `SLOW` | SQL 쿼리 캡처 전략 (`ALWAYS`, `ERROR`, `SLOW`, `SAMPLE`, `OFF`) |
+| `apm.capture.sample-rate` | `0.01` | SAMPLE 모드 시 샘플링 비율 (0.0 ~ 1.0) |
+| `apm.security.masking-enabled` | `true` | 정규식 기반 개인/민감정보 마스킹 활성화 |
+| `apm.security.mask-body` | `true` | 요청/응답 Body 마스킹 적용 여부 |
+| `apm.security.mask-sql-param` | `true` | SQL 바인딩 파라미터 마스킹 적용 여부 |
+| `apm.limit.max-sql-count` | `100` | 단일 요청 내 추적할 최대 SQL 개수 |
+| `apm.limit.max-sql-detail-count`| `10` | 쿼리 본문 및 파라미터를 보관할 최대 SQL 수 |
+| `apm.limit.max-sql-length` | `2000` | 기록할 SQL 최대 문자열 길이 |
+| `apm.limit.max-sql-param-length`| `1000` | 기록할 파라미터 최대 문자열 길이 |
+| `apm.limit.max-body-length` | `2000` | 기록할 요청/응답 Body 최대 문자열 길이 |
+| `apm.limit.n1-detection-threshold` | `3` | N+1 쿼리 감지 임계 호출 횟수 |
+| `apm.error.http-status-threshold` | `400` | 에러로 간주할 최소 HTTP 상태 코드 |
+| `apm.error.error-code-keys` | `resCode, res_cd, code, errorCode, status` | JSON 응답 본문에서 탐색할 에러 필드 키 목록 |
+| `apm.error.error-codes` | `9999, ERROR, FAIL, ERR` | 비즈니스 에러로 간주할 에러 코드 값 목록 |
+
+---
+
+## 🏷️ 로그 마커 규격 (Log Markers & Format)
+
+모든 로그는 SLF4J Marker와 함께 구조화된 logfmt 포맷으로 `ApmLog` 로거에 기록됩니다.
+
+| 마커 (Marker) | 설명 | 예시 로그 포맷 |
 | :--- | :--- | :--- |
-| **인터셉트 지점** | `org.apache.ibatis.plugin.Interceptor` | `DataSource` Proxy (`PreparedStatement.execute()`) |
-| **추적 내용** | Mapper ID, 완성형 SQL, 파라미터, 실행 시간 | Repository/Entity, 실제 실행 SQL, 파라미터, 실행 시간 |
-| **슬로우 쿼리 감지**| `[SLOW_SQL]` 임계치 초과 시 자동 마킹 | 동일하게 `[SLOW_SQL]` 자동 마킹 |
+| `[HTTP]` | HTTP 요청 처리 완료 요약 | `trace_id=xxx span_id=yyy interface_id=- uri=/users method=GET status=200 elapsed=24ms` |
+| `[HTTP_DETAIL]` | 상세 요청/응답 바디 포함 | `trace_id=xxx span_id=yyy req_body="{...}" res_body="{...}"` |
+| `[SQL]` | 캡처된 실행 SQL 및 바인딩 파라미터 | `trace_id=xxx span_id=yyy sql_id=findUser elapsed=4ms sql="SELECT * FROM users WHERE id = 1" param="id=1"` |
+| `[SLOW_SQL]` | 슬로우 쿼리 단건 감지 | `trace_id=xxx span_id=yyy sql_id=largeQuery elapsed=420ms sql="..." [SLOW_SQL]` |
+| `[TOTAL_SQL_SLOW]` | 요청 누적 SQL 시간 초과 | `trace_id=xxx span_id=yyy total_sql_elapsed=1250ms limit=1000ms [TOTAL_SQL_SLOW]` |
+| `[N1_QUERY]` | N+1 쿼리 감지 경고 | `trace_id=xxx sql_id=selectItem call_count=4 possible N+1 detected — consider fetch join or batch size` |
+| `[EXCEPTION]` | 예외 발생 및 지문 해시 | `trace_id=xxx span_id=yyy error_fingerprint=a1b2c3d4e5f6 error_type=SYSTEM message="..." breadcrumbs=[...]` |
+| `[NETTY]` | Netty TCP 트랜잭션 요약 | `trace_id=xxx span_id=yyy remote=/127.0.0.1:8080 elapsed=12ms` |
+| `[NETTY_DETAIL]` | Netty 패킷 페이로드 상세 | `trace_id=xxx span_id=yyy request="{...}" response="{...}"` |
+| `[BATCH]` | Spring Batch Job/Step 완료 | `trace_id=xxx span_id=yyy job_name=dailyBatch step_name=step1 status=COMPLETED elapsed=850ms` |
 
 ---
 
-## 🛡 3. Sweetpark 오픈소스 표준 품질 게이트 & CI/CD 파이프라인
+## 📊 Grafana Loki 대시보드 연동
 
-본 프로젝트는 `sweetpark` 오픈소스 표준 품질 관리 체계를 따릅니다.
+본 프로젝트는 Grafana에서 즉시 임포트하여 사용할 수 있는 대시보드 템플릿을 번들로 제공합니다:
+- **템플릿 파일**: [`grafana/mini-apm-dashboard.json`](grafana/mini-apm-dashboard.json)
 
-| 도구 | 역할 | 검증 방식 |
-| :--- | :--- | :--- |
-| **Spotless** | Google Java Format 스타일 자동 포맷팅 | `./gradlew spotlessCheck` (적용: `spotlessApply`) |
-| **SpotBugs** | Java 바이트코드 레벨 잠재적 버그/NPE 정적 분석 | `./gradlew spotbugsMain` |
-| **JaCoCo** | 핵심 파서/인터셉터 모듈 **100% 라인 커버리지** 강제화 | `./gradlew jacocoTestCoverageVerification` |
-| **CodeRabbit AI** | PR 등록 시 변경 diff 자동 AI 코드 리뷰 | GitHub PR Webhook 연동 |
-| **GitHub Actions** | Push/PR 시 자동 빌드, 테스트, Step Summary 리포트 발행 | `.github/workflows/ci.yml` |
-
----
-
-## 🔍 4. 원본 소스 및 이관 대상 (Source Reference)
-
-| 구분 | 내용 |
-| :--- | :--- |
-| **원본 저장소** | `wiezonSRC/APM-LOGGING-STARTER` (Branch: `main`) |
-| **핵심 모듈 1** | `logging-starter/` (AutoConfiguration, Interceptors, Filters, LogQueue, Masker) |
-| **핵심 모듈 2** | `logging-starter-test/` (Servlet/Netty/Batch 통합 테스트 및 샘플 데모 앱) |
-| **참고 문서/설정** | `GRAFANA.md`, `NETTY_CONFIG.md`, `SERVLET_CONFIG.md`, `BATCH_CONFIG.md` |
-
----
-
-## 🛠 5. 이관 및 리팩토링 기준 (Refactoring & Sanitization Rules)
-
-새로운 세션에서 소스코드를 옮겨올 때 **반드시 준수해야 하는 기준**입니다.
-
-### ① 사내 규격 및 하드코딩 완전 제거 (Sanitization & Generalization)
-* **특정 헤더명 강제 해소**:
-  * 사내 헤더명(`IFID` 등)을 고정하지 않고, `apm.trace.header-name: X-Trace-Id`와 같이 `application.yml` 프로퍼티로 자유롭게 변경 가능하도록 개선 (기본값: `X-Request-Id` or `traceId`).
-* **사내 에러 코드(`9999`) 하드코딩 제거**:
-  * 특정 응답 코드 기반의 에러 판정 로직을 `ErrorEvaluator` 인터페이스로 추상화하고, 기본 구현체는 HTTP 4xx/5xx 및 일반적인 Exception을 기준으로 판정하도록 리팩토링.
-* **사내 전용 로거/경로 일반화**:
-  * `/LOG_PATH` 등 하드코딩된 파일 경로 대신 Spring Boot의 기본 `logging.file.path` 및 표준 SLF4J Marker 구조 준수.
-
-### ② 패키지 네이밍 표준화
-* 기존 `com.company.logging`을 표준 오픈소스 패키지로 리네이밍:
-  * **Target Base Package**: `io.github.sweetpark.apm`
-  * Core: `io.github.sweetpark.apm.core`
-  * MyBatis Interceptor: `io.github.sweetpark.apm.interceptor.mybatis`
-  * JPA/JDBC Proxy: `io.github.sweetpark.apm.interceptor.jpa`
-  * Netty/Batch: `io.github.sweetpark.apm.support.{netty,batch}`
-
-### ③ 확장성 및 조건부 자동 구성 (Conditional Configuration)
-* `@ConditionalOnClass`를 세분화하여, 소비 프로젝트에 Netty, Spring Batch, MyBatis, JPA 중 일부만 존재해도 `NoClassDefFoundError` 없이 안전하게 구동되도록 설계.
+### 주요 LogQL 예시
+- **초당 HTTP 요청 수 (RPS)**:
+  ```logql
+  sum(rate({app=~".+"} |= "ApmLog" |~ "\\[HTTP\\]" [1m])) by (app)
+  ```
+- **p95 / p99 레이턴시 (ms)**:
+  ```logql
+  quantile_over_time(0.95, {app=~".+"} |= "ApmLog" |~ "\\[HTTP\\]" | unwrap elapsed [1m])
+  ```
+- **슬로우 쿼리 발생 빈도**:
+  ```logql
+  sum(count_over_time({app=~".+"} |= "ApmLog" |~ "\\[SLOW_SQL\\]|\\[TOTAL_SQL_SLOW\\]" [5m]))
+  ```
+- **에러 지문별 실시간 발생 순위**:
+  ```logql
+  topk(10, sum(count_over_time({app=~".+"} |= "ApmLog" |~ "\\[EXCEPTION\\]" | logfmt | __error__="" [10m])) by (error_fingerprint, error_type))
+  ```
 
 ---
 
-## 📚 6. 오픈소스 필수 표준 6종 문서 구축 계획
+## 🏗️ 아키텍처 상세 & 개발자 가이드
 
-이관 시 다음 6종 문서를 생성합니다:
-1. `LICENSE` (Apache License 2.0)
-2. `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1)
-3. `CONTRIBUTING.md` (기여 가이드, 브랜치 전략, 100% 커버리지 룰)
-4. `docs/ARCHITECTURE.md` (Spring Boot AutoConfiguration 및 인터셉터 흐름 다이어그램)
-5. `docs/CONVENTIONS.md` (Spotless, SpotBugs, Conventional Commits)
-6. `README.md` (공식 뱃지, 퀵스타트, Grafana 연동 가이드)
-
----
-
-## ⚙️ 7. GitHub 저장소 설정 (Repository Settings Checklist)
-
-* [ ] **Visibility**: `Settings` ➔ Danger Zone ➔ **`Make public`**
-* [ ] **PR 머지 시 브랜치 자동 삭제**: `Settings` ➔ `General` ➔ `Pull Requests` ➔ ✅ **`Automatically delete head branches`** 체크
-* [ ] **`main` 브랜치 보호 룰**: `Settings` ➔ `Branches` ➔ `Add branch protection rule` (`main`)
-  - ✅ `Require a pull request before merging` (Approvals: 1)
-  - ✅ `Require status checks to pass before merging` (Status check: `Test & 100% Coverage Verification`)
-  - ✅ `Require conversation resolution before merging`
-* [ ] **CodeRabbit AI 연동**: [CodeRabbit.ai](https://coderabbit.ai/)에서 저장소 연동 및 `Chill` 프로필 설정
+- [상세 사용 및 런타임별 설정 가이드 (docs/USAGE_GUIDE.md)](docs/USAGE_GUIDE.md)
+- [아키텍처 및 내부 라이프사이클 설계 (docs/ARCHITECTURE.md)](docs/ARCHITECTURE.md)
+- [품질 게이트 및 코드 컨벤션 가이드 (docs/CONVENTIONS.md)](docs/CONVENTIONS.md)
+- [오픈소스 기여 가이드 (CONTRIBUTING.md)](CONTRIBUTING.md)
+- [행동 강령 (CODE_OF_CONDUCT.md)](CODE_OF_CONDUCT.md)
+- [보안 정책 (SECURITY.md)](SECURITY.md)
 
 ---
 
-## 🗺 8. 단계별 로드맵 (Roadmap to Public Release)
+## 🛠️ 소스 빌드 및 로컬 테스트 (Build from Source)
 
-```mermaid
-graph LR
-    P1["Phase 1<br/>레포 초기화 & 설계"] --> P2["Phase 2<br/>소스 이관 & 리팩토링"]
-    P2 --> P3["Phase 3<br/>JPA/MyBatis 검증"]
-    P3 --> P4["Phase 4<br/>Public 오픈소스 배포"]
-    style P1 fill:#238636,stroke:#fff,stroke-width:2px,color:#fff
-    style P2 fill:#1f6feb,stroke:#fff,stroke-width:2px,color:#fff
-    style P3 fill:#8957e5,stroke:#fff,stroke-width:2px,color:#fff
-    style P4 fill:#d29922,stroke:#fff,stroke-width:2px,color:#fff
+```bash
+# 1. 저장소 클론
+git clone https://github.com/sweetpark/mini-apm-spring-boot-starter.git
+cd mini-apm-spring-boot-starter
+
+# 2. 코드 포맷팅 자동 적용 (Google Java Format)
+./gradlew spotlessApply
+
+# 3. 전체 단위/통합 테스트, 정적 분석(SpotBugs) 및 커버리지 게이트 검증
+./gradlew check
+
+# 4. 로컬 Maven 저장소(~/.m2/repository)에 배포
+./gradlew publishToMavenLocal
 ```
 
-### 📌 Phase 1: Private 레포 생성 및 청사진 수립 (✅ 완료)
-- [x] 오픈소스 지향 저장소(`mini-apm-spring-boot-starter`) 생성 (Private)
-- [x] 이관 가이드, 리팩토링 원칙, **MyBatis & JPA 동시 지원 아키텍처** 및 품질 플레이북이 담긴 README 작성
-
-### 📌 Phase 2: 소스코드 이관 및 클렌징 (Next Session)
-- [ ] `wiezonSRC/APM-LOGGING-STARTER`에서 `logging-starter` 및 `test` 모듈 이관
-- [ ] 패키지명 변경 (`io.github.sweetpark.apm`)
-- [ ] 하드코딩된 사내 규격(IFID, 9999 에러코드 등)을 `application.yml` 프로퍼티 및 전략 패턴 인터페이스로 리팩토링
-- [ ] **JPA/Hibernate용 DataSource Proxy SQL 추적 모듈 추가** (`JpaSqlTraceInterceptor`)
-- [ ] Spotless, SpotBugs, JaCoCo 100% 라인 커버리지 룰 구성
-
-### 📌 Phase 3: 테스트 및 데모 검증
-- [ ] Spring MVC, Netty TCP, Spring Batch 3개 런타임별 통합 테스트 수행
-- [ ] **MyBatis vs JPA(Hibernate) 각각의 SQL 파라미터 바인딩 및 슬로우 쿼리 감지 검증**
-- [ ] 비동기 큐(`AsyncLogEventQueue`) 부하 테스트 및 TPS 측정
-- [ ] Grafana 대시보드 템플릿(`grafana-dashboard.json`) 작성 및 동작 검증
-
-### 📌 Phase 4: Public 오픈소스 전환 및 배포
-- [ ] `LICENSE` (Apache 2.0), `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `docs/` 추가
-- [ ] GitHub Actions CI (`.github/workflows/ci.yml`, `release.yml`) 및 PR 템플릿 추가
-- [ ] CodeRabbit AI 연동 및 Branch Protection 설정
-- [ ] **저장소 Public 전환 및 Maven Central / JitPack 배포**
-
 ---
 
-## 📋 다음 세션 작업자를 위한 체크리스트 (Action Items for Next Session)
-1. `wiezonSRC/APM-LOGGING-STARTER` 소스 복사 및 패키지 리네이밍 (`io.github.sweetpark.apm`)
-2. `LoggingProperties.java`에 커스텀 헤더/에러 판정 설정 추가
-3. DataSource 프록시 기반의 JPA/JDBC SQL 인터셉터(`JpaSqlTraceInterceptor`) 추가
-4. Spotless, SpotBugs, JaCoCo 100% 라인 커버리지 연동 (`./gradlew check`)
-5. GitHub Actions CI (`.github/workflows/ci.yml`) 및 PR 템플릿 추가 후 PR 생성
+## 📄 라이선스 (License)
+
+본 프로젝트는 **[Apache License 2.0](LICENSE)**에 따라 자유롭게 사용, 수정, 배포할 수 있습니다.

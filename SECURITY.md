@@ -1,4 +1,4 @@
-# 🔒 보안 정책 (Security Policy)
+ 🔒 보안 정책 (Security Policy)
 
 `mybatis-sql-tuner-ai` 프로젝트는 사용자의 데이터 보안과 코드 신뢰성을 최우선으로 생각합니다.
 

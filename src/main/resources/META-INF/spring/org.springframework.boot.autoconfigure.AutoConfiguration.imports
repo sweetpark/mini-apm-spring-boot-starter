@@ -1,0 +1,6 @@
+io.github.sweetpark.apm.core.config.ApmCoreAutoConfiguration
+io.github.sweetpark.apm.interceptor.mybatis.ApmMybatisAutoConfiguration
+io.github.sweetpark.apm.interceptor.jpa.ApmJpaAutoConfiguration
+io.github.sweetpark.apm.support.servlet.ApmWebAutoConfiguration
+io.github.sweetpark.apm.support.netty.ApmNettyAutoConfiguration
+io.github.sweetpark.apm.support.batch.ApmBatchAutoConfiguration

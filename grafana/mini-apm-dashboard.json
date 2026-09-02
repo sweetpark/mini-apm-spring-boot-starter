@@ -1,0 +1,188 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "title": "API Metrics & Performance",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "\" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "reqps"
+        }
+      },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 1 },
+      "id": 2,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "expr": "sum by (status) (rate({job=~\"\\"} |= \"[HTTP]\" | logfmt [\]))",
+          "legendFormat": "Status {{status}}"
+        }
+      ],
+      "title": "HTTP Request Rate (by Status)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "\" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "ms"
+        }
+      },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 1 },
+      "id": 3,
+      "targets": [
+        {
+          "expr": "quantile_over_time(0.95, {job=~\"\\"} |= \"[HTTP]\" | logfmt | unwrap elapsed [\])",
+          "legendFormat": "p95 Latency"
+        },
+        {
+          "expr": "quantile_over_time(0.99, {job=~\"\\"} |= \"[HTTP]\" | logfmt | unwrap elapsed [\])",
+          "legendFormat": "p99 Latency"
+        },
+        {
+          "expr": "avg_over_time({job=~\"\\"} |= \"[HTTP]\" | logfmt | unwrap elapsed [\])",
+          "legendFormat": "Avg Latency"
+        }
+      ],
+      "title": "API Latency Percentiles",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "\" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 1 },
+      "id": 4,
+      "targets": [
+        {
+          "expr": "sum by (error_type) (count_over_time({job=~\"\\"} |~ \"\\[ERROR_(BIZ|DB|EXTERNAL|SYSTEM)\\]\" | logfmt [\]))",
+          "legendFormat": "{{error_type}}"
+        }
+      ],
+      "title": "Exceptions by Error Type",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 8 },
+      "id": 5,
+      "title": "Database & SQL Performance",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "\" },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 9 },
+      "id": 6,
+      "targets": [
+        {
+          "expr": "sum by (sql_id) (count_over_time({job=~\"\\"} |= \"[SLOW_SQL]\" | logfmt [\]))",
+          "legendFormat": "{{sql_id}}"
+        }
+      ],
+      "title": "Slow SQL Occurrences",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "\" },
+      "fieldConfig": {
+        "defaults": { "unit": "ms" }
+      },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 9 },
+      "id": 7,
+      "targets": [
+        {
+          "expr": "max_over_time({job=~\"\\"} |~ \"\\[(SQL|SLOW_SQL)\\]\" | logfmt | unwrap elapsed [\]) by (sql_id)",
+          "legendFormat": "{{sql_id}}"
+        }
+      ],
+      "title": "Max SQL Execution Time (ms)",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 16 },
+      "id": 8,
+      "title": "Real-Time Log Stream",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "\" },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 17 },
+      "id": 9,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "expr": "{job=~\"\\"} |~ \"\\[(HTTP|HTTP_DETAIL|NETTY|NETTY_DETAIL|BATCH|SQL|SLOW_SQL|EXCEPTION)\\]\""
+        }
+      ],
+      "title": "Unified APM Log Stream",
+      "type": "logs"
+    }
+  ],
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["apm", "spring-boot", "loki"],
+  "templating": {
+    "list": [
+      {
+        "current": { "selected": true, "text": "Loki", "value": "loki" },
+        "hide": 0,
+        "label": "Data Source",
+        "name": "DS_LOKI",
+        "options": [],
+        "query": "loki",
+        "refresh": 1,
+        "type": "datasource"
+      },
+      {
+        "current": { "selected": false, "text": "all", "value": ".*" },
+        "datasource": { "type": "loki", "uid": "\" },
+        "definition": "label_values(job)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Job",
+        "name": "job",
+        "options": [],
+        "query": "label_values(job)",
+        "refresh": 2,
+        "type": "query"
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": { "refresh_intervals": ["5s", "10s", "30s", "1m"] },
+  "timezone": "browser",
+  "title": "mini-apm: Spring Boot Observability",
+  "uid": "mini-apm-overview",
+  "version": 1
+}
