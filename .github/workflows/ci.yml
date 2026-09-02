@@ -23,6 +23,9 @@ jobs:
       - name: Validate Gradle Wrapper
         uses: gradle/actions/wrapper-validation@v3
 
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
       - name: Spotless Code Formatting Check
         run: ./gradlew spotlessCheck --no-daemon
 
