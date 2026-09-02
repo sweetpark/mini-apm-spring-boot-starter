@@ -31,7 +31,10 @@
 ### 방법 A: JitPack을 통한 의존성 추가 (외부 프로젝트 도입 시 권장)
 별도의 소스 다운로드나 로컬 빌드 없이 Gradle / Maven 저장소 설정만으로 즉시 사용할 수 있습니다.
 
-> ⚠️ **주의 (GroupId)**: JitPack을 통해 의존성을 받을 때는 GroupId가 **`com.github.sweetpark`**입니다.
+- 🌐 **JitPack 배포 주소**: [https://jitpack.io/#sweetpark/mini-apm-spring-boot-starter](https://jitpack.io/#sweetpark/mini-apm-spring-boot-starter)
+- 📌 **GroupId**: `com.github.sweetpark`
+- 📌 **ArtifactId**: `mini-apm-spring-boot-starter`
+- 📌 **최신 버전**: `v1.0.0` (또는 `main-SNAPSHOT`)
 
 #### Gradle (Groovy)
 `build.gradle`:

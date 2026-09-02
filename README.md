@@ -49,8 +49,12 @@
 프로젝트 환경에 따라 **① JitPack 원격 저장소** 또는 **② 소스 빌드 후 로컬 Maven(`mavenLocal()`)** 중 선택하여 의존성을 구성할 수 있습니다.
 
 #### 방법 A: JitPack 원격 저장소 사용 (외부 프로젝트 권장)
-별도 빌드 과정 없이 `build.gradle` 또는 `pom.xml`에 저장소와 의존성을 선언하여 즉시 사용합니다.  
-*(JitPack 의존성 GroupId: `com.github.sweetpark`)*
+별도 빌드 과정 없이 `build.gradle` 또는 `pom.xml`에 JitPack 저장소와 의존성을 선언하여 즉시 사용합니다.
+
+- 🌐 **JitPack 배포 주소**: [https://jitpack.io/#sweetpark/mini-apm-spring-boot-starter](https://jitpack.io/#sweetpark/mini-apm-spring-boot-starter)
+- 📌 **GroupId**: `com.github.sweetpark`
+- 📌 **ArtifactId**: `mini-apm-spring-boot-starter`
+- 📌 **최신 버전**: `v1.0.0` (또는 `main-SNAPSHOT`)
 
 ##### Gradle (Groovy)
 ```groovy
