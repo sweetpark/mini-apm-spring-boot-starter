@@ -61,4 +61,4 @@ jobs:
         if: steps.tag_version.outputs.new_tag
         run: |
           echo "Triggering JitPack build for ${{ steps.tag_version.outputs.new_tag }}..."
-          curl -s -X GET "https://jitpack.io/api/builds/sweetpark/mini-apm-spring-boot-starter/${{ steps.tag_version.outputs.new_tag }}" || true
+          curl -s -X GET "https://jitpack.io/api/builds/com.github.sweetpark/mini-apm-spring-boot-starter/${{ steps.tag_version.outputs.new_tag }}" || true
