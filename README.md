@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen.svg" alt="Spring Boot 3.x" />
   <img src="https://img.shields.io/badge/Code%20Style-Google%20Java%20Format-brightgreen.svg" alt="Spotless" />
   <img src="https://img.shields.io/badge/Static%20Analysis-SpotBugs-yellow.svg" alt="SpotBugs" />
-  <img src="https://img.shields.io/badge/Coverage-100%25%20(Core)-success.svg" alt="Coverage" />
+  <img src="https://img.shields.io/badge/Coverage-85%25%2B%20(Core%20%2B%20Interceptors)-success.svg" alt="Coverage" />
   <img src="https://img.shields.io/badge/Build-Passing-brightgreen.svg" alt="Build" />
 </p>
 
@@ -251,6 +251,40 @@ apm:
   ```logql
   topk(10, sum(count_over_time({app=~".+"} |= "ApmLog" |~ "\\[EXCEPTION\\]" | logfmt | __error__="" [10m])) by (error_fingerprint, error_type))
   ```
+
+---
+
+## 🧪 로컬 관측 스택 1분 체험 (Docker Compose)
+
+별도의 인프라 없이 로컬에서 Loki + Grafana + mini-apm 조합을 바로 띄워볼 수 있습니다.
+
+```bash
+# 1. Loki + Promtail + Grafana 스택 기동
+docker compose up -d
+
+# 2. 샘플 앱 실행 (별도 터미널)
+./gradlew :examples:sample-app:bootRun
+```
+
+샘플 앱이 뜨면 아래 엔드포인트를 호출해보세요. 각 호출이 어떤 APM 로그를 만들어내는지는
+[`examples/sample-app/README.md`](examples/sample-app/README.md)에 정리되어 있습니다.
+
+```bash
+curl http://localhost:8080/api/authors                 # 정상 요청 (SQL 로깅)
+curl http://localhost:8080/api/authors/n-plus-one       # N+1 쿼리 감지
+curl http://localhost:8080/api/authors/slow             # 슬로우 API 감지
+curl http://localhost:8080/api/authors/999/error        # 예외 지문 해싱
+```
+
+그 다음 [http://localhost:3000](http://localhost:3000) (별도 로그인 없이 접속 가능)으로 접속하면
+`grafana/mini-apm-dashboard.json` 대시보드가 자동 프로비저닝되어 실시간으로 채워지는 것을 확인할 수 있습니다.
+샘플 앱은 `logs/mini-apm-sample.log`에 logfmt 포맷으로 기록하며, Promtail이 이 파일을 tail 하여 Loki로 전송합니다.
+
+스택을 종료하려면:
+
+```bash
+docker compose down
+```
 
 ---
 

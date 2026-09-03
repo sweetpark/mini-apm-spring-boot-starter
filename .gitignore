@@ -40,3 +40,10 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### Local observability stack (docker-compose.yml) ###
+/logs/
+
+### H2 (test runs can leave trace logs behind) ###
+trace.db/
+*.trace.db

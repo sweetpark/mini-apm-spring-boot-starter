@@ -1,0 +1,31 @@
+<configuration>
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%marker] - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!--
+      Dedicated file for the "ApmLog" logger only, in plain logfmt (no extra
+      prefix) so it can be tailed by Promtail and parsed with `| logfmt` in
+      Grafana. Written relative to this module's working directory so it
+      lands in repo-root/logs, which docker-compose.yml mounts into the
+      Promtail container. See the root README's "Local Observability Stack"
+      section.
+    -->
+    <appender name="APM_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>../../logs/mini-apm-sample.log</file>
+        <append>true</append>
+        <encoder>
+            <pattern>level=%level marker=%marker %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="ApmLog" level="INFO" additivity="true">
+        <appender-ref ref="APM_FILE" />
+    </logger>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+    </root>
+</configuration>

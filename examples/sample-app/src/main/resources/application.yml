@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: mini-apm-sample-app
+  datasource:
+    url: jdbc:h2:mem:sampledb;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+
+server:
+  port: 8080
+
+# Tuned for an immediately-visible demo (see README.md in this module).
+apm:
+  enabled: true
+  trace:
+    level: PROD
+  slow:
+    api-ms: 1000
+    query:
+      ms: 50
+      total-ms: 500
+  capture:
+    body: ALWAYS
+    sql: ALWAYS
+  security:
+    masking-enabled: true
+  limit:
+    n1-detection-threshold: 3
