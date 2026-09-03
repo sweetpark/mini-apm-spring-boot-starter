@@ -17,6 +17,10 @@ java {
     }
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
 repositories {
     mavenCentral()
 }
@@ -61,6 +65,9 @@ dependencies {
 
     /* ===== SpotBugs Annotations ===== */
     compileOnly 'com.github.spotbugs:spotbugs-annotations:4.8.3'
+
+    /* ===== Configuration Metadata (application.yml IDE auto-completion) ===== */
+    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:${springBootVersion}"
 
     /* ===== Unit Testing ===== */
     testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
@@ -107,7 +114,17 @@ jacocoTestCoverageVerification {
             element = 'CLASS'
             includes = [
                 'io.github.sweetpark.apm.core.support.util.*',
-                'io.github.sweetpark.apm.core.error.*'
+                'io.github.sweetpark.apm.core.error.*',
+                'io.github.sweetpark.apm.core.context.*',
+                'io.github.sweetpark.apm.core.sql.*',
+                'io.github.sweetpark.apm.core.process.*',
+                'io.github.sweetpark.apm.interceptor.mybatis.SqlTraceInterceptor',
+                'io.github.sweetpark.apm.interceptor.jpa.ApmProxyConnection',
+                'io.github.sweetpark.apm.interceptor.jpa.ApmProxyStatement',
+                'io.github.sweetpark.apm.interceptor.jpa.ApmProxyPreparedStatement',
+                'io.github.sweetpark.apm.interceptor.jpa.ApmProxyDataSource',
+                'io.github.sweetpark.apm.interceptor.jpa.ApmDataSourceBeanPostProcessor',
+                'io.github.sweetpark.apm.support.servlet.LoggingFilter'
             ]
             limit {
                 counter = 'LINE'
