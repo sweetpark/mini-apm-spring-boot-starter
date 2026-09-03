@@ -67,7 +67,7 @@ graph TD
 Applications may use either MyBatis, Spring Data JPA (Hibernate), or both simultaneously.
 To prevent duplicate logging when both are active:
 1. SqlTraceInterceptor marks SqlTraceContextHolder.setMyBatisActive(true).
-2. ApmProxyPreparedStatement checks SqlTraceContextHolder.isMyBatisActive(). If 	rue, the lower-level JDBC proxy bypasses duplicate tracking.
+2. ApmProxyPreparedStatement checks SqlTraceContextHolder.isMyBatisActive(). If true, the lower-level JDBC proxy bypasses duplicate tracking.
 3. If MyBatis is not present or not handling the statement (e.g. Pure JPA/Hibernate query), ApmProxyPreparedStatement captures the parameters, formats the SQL, records execution time, and detects N+1 queries.
 
 | Feature | MyBatis Mode | JPA Mode |
