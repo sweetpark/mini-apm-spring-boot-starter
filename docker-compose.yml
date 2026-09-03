@@ -9,6 +9,10 @@
 # Then run the sample app (see examples/sample-app) or point your own app's
 # logback file appender at ./logs/mini-apm.log, hit a few endpoints, and open
 # Grafana at http://localhost:3000 (admin/admin) to see the dashboard fill in.
+#
+# Port clash? If 3000/3100 are already taken on your machine (e.g. by another
+# Loki/Grafana stack), just remap the host side here, e.g. "3101:3100" /
+# "3001:3000" -- the container-internal ports and provisioning don't change.
 services:
   loki:
     image: grafana/loki:2.9.8

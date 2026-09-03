@@ -6,10 +6,14 @@ A minimal Spring Boot + Spring Data JPA (H2) app that pulls in the starter via
 
 ## Run it
 
+Requires Java 17 (the Gradle wrapper build fails with `Unsupported class file major
+version` on newer JDKs). Point `JAVA_HOME` at a JDK 17 install if that's not your
+default.
+
 From the repository root:
 
 ```bash
-./gradlew :examples:sample-app:bootRun
+JAVA_HOME=$(/usr/libexec/java_home -v 17) ./gradlew :examples:sample-app:bootRun
 ```
 
 The app starts on `http://localhost:8080` and seeds 5 authors with 3 books

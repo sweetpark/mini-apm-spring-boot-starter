@@ -32,7 +32,7 @@
       },
       "targets": [
         {
-          "expr": "sum by (status) (rate({job=~\"$job\"} |= \"[HTTP]\" | logfmt [$__interval]))",
+          "expr": "sum by (status) (rate({job=~\"$job\"} | logfmt | marker=\"HTTP\" [$__interval]))",
           "legendFormat": "Status {{status}}"
         }
       ],
@@ -51,15 +51,15 @@
       "id": 3,
       "targets": [
         {
-          "expr": "quantile_over_time(0.95, {job=~\"$job\"} |= \"[HTTP]\" | logfmt | unwrap elapsed [$__interval])",
+          "expr": "quantile_over_time(0.95, {job=~\"$job\"} | logfmt | marker=\"HTTP\" | unwrap elapsed [$__interval])",
           "legendFormat": "p95 Latency"
         },
         {
-          "expr": "quantile_over_time(0.99, {job=~\"$job\"} |= \"[HTTP]\" | logfmt | unwrap elapsed [$__interval])",
+          "expr": "quantile_over_time(0.99, {job=~\"$job\"} | logfmt | marker=\"HTTP\" | unwrap elapsed [$__interval])",
           "legendFormat": "p99 Latency"
         },
         {
-          "expr": "avg_over_time({job=~\"$job\"} |= \"[HTTP]\" | logfmt | unwrap elapsed [$__interval])",
+          "expr": "avg_over_time({job=~\"$job\"} | logfmt | marker=\"HTTP\" | unwrap elapsed [$__interval])",
           "legendFormat": "Avg Latency"
         }
       ],
@@ -78,7 +78,7 @@
       "id": 4,
       "targets": [
         {
-          "expr": "sum by (error_type) (count_over_time({job=~\"$job\"} |~ \"\\[ERROR_(BIZ|DB|EXTERNAL|SYSTEM)\\]\" | logfmt [$__interval]))",
+          "expr": "sum by (error_type) (count_over_time({job=~\"$job\"} | logfmt | marker=~\"ERROR_(BIZ|DB|EXTERNAL|SYSTEM)\" [$__interval]))",
           "legendFormat": "{{error_type}}"
         }
       ],
@@ -98,7 +98,7 @@
       "id": 6,
       "targets": [
         {
-          "expr": "sum by (sql_id) (count_over_time({job=~\"$job\"} |= \"[SLOW_SQL]\" | logfmt [$__interval]))",
+          "expr": "sum by (sql_id) (count_over_time({job=~\"$job\"} | logfmt | marker=\"SLOW_SQL\" [$__interval]))",
           "legendFormat": "{{sql_id}}"
         }
       ],
@@ -114,7 +114,7 @@
       "id": 7,
       "targets": [
         {
-          "expr": "max_over_time({job=~\"$job\"} |~ \"\\[(SQL|SLOW_SQL)\\]\" | logfmt | unwrap elapsed [$__interval]) by (sql_id)",
+          "expr": "max_over_time({job=~\"$job\"} | logfmt | marker=~\"SQL|SLOW_SQL\" | unwrap elapsed [$__interval]) by (sql_id)",
           "legendFormat": "{{sql_id}}"
         }
       ],
@@ -142,7 +142,7 @@
       },
       "targets": [
         {
-          "expr": "{job=~\"$job\"} |~ \"\\[(HTTP|HTTP_DETAIL|NETTY|NETTY_DETAIL|BATCH|SQL|SLOW_SQL|EXCEPTION)\\]\""
+          "expr": "{job=~\"$job\"} | logfmt | marker=~\"HTTP|HTTP_DETAIL|NETTY|NETTY_DETAIL|BATCH|SQL|SLOW_SQL|EXCEPTION\""
         }
       ],
       "title": "Unified APM Log Stream",
