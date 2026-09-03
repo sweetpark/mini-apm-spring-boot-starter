@@ -1,100 +1,100 @@
-# 🚀 자동 릴리즈 및 JitPack 배포 워크플로우 (Automated Release Workflow)
+# 🚀 Automated Release Workflow
 
-`mini-apm-spring-boot-starter`는 PR이 `main` 브랜치에 머지될 때 커밋 메시지를 분석하여 **자동으로 시맨틱 버전(SemVer) 계산 ➔ 품질 게이트 검증 ➔ Git Tag 생성 ➔ GitHub Release 발행 ➔ JitPack 빌드 웜업**까지 100% 무인 자동화로 처리합니다.
-
----
-
-## 📑 목차
-1. [전체 파이프라인 개요](#1-전체-파이프라인-개요)
-2. [커밋 메시지 컨벤션 및 버전 승격 규칙](#2-커밋-메시지-컨벤션-및-버전-승격-규칙)
-3. [PR 머지 가이드 (Squash and Merge)](#3-pr-머지-가이드-squash-and-merge)
-4. [GitHub Actions 동작 단계 상세](#4-github-actions-동작-단계-상세)
-5. [릴리즈 스킵 대상 커밋](#5-릴리즈-스킵-대상-커밋)
-6. [수동 릴리즈 (Manual Fallback)](#6-수동-릴리즈-manual-fallback)
+When a PR is merged into the `main` branch, `mini-apm-spring-boot-starter` analyzes the commit messages and fully automates **semantic version (SemVer) calculation ➔ quality gate verification ➔ Git tag creation ➔ GitHub Release publishing ➔ JitPack build warm-up** with no manual steps.
 
 ---
 
-## 1. 전체 파이프라인 개요
+## 📑 Table of Contents
+1. [Pipeline Overview](#1-pipeline-overview)
+2. [Commit Message Convention & Version Bump Rules](#2-commit-message-convention--version-bump-rules)
+3. [PR Merge Guide (Squash and Merge)](#3-pr-merge-guide-squash-and-merge)
+4. [GitHub Actions Step-by-Step Details](#4-github-actions-step-by-step-details)
+5. [Commits That Skip a Release](#5-commits-that-skip-a-release)
+6. [Manual Release (Manual Fallback)](#6-manual-release-manual-fallback)
+
+---
+
+## 1. Pipeline Overview
 
 ```
-[개발자 PR 생성] ──► [CI 품질 게이트 통과] ──► [main 브랜치에 Squash & Merge]
+[Developer opens a PR] ──► [CI quality gate passes] ──► [Squash & Merge into main]
                                                        │
   ┌────────────────────────────────────────────────────┘
   ▼
-[GitHub Actions: release.yml 자동 실행]
-  ├─ 1. 이전 태그 이후의 커밋 메시지(feat, fix 등) 분석
-  ├─ 2. 다음 시맨틱 버전 계산 (예: v1.0.0 ➔ v1.1.0)
-  ├─ 3. 전체 품질 게이트 재검증 (./gradlew check)
-  ├─ 4. Git Tag 자동 생성 및 Push (v1.1.0)
-  ├─ 5. GitHub Release 자동 생성 (Changelog 및 의존성 가이드 자동 첨부)
-  └─ 6. JitPack API 호출 ➔ 백그라운드 사전 빌드(Warm-up) 완료
+[GitHub Actions: release.yml runs automatically]
+  ├─ 1. Analyze commit messages (feat, fix, etc.) since the previous tag
+  ├─ 2. Compute the next semantic version (e.g. v1.0.0 ➔ v1.1.0)
+  ├─ 3. Re-verify the full quality gate (./gradlew check)
+  ├─ 4. Create and push the Git tag automatically (v1.1.0)
+  ├─ 5. Publish the GitHub Release automatically (changelog and dependency snippet attached)
+  └─ 6. Call the JitPack API ➔ trigger a background pre-build (warm-up)
 ```
 
 ---
 
-## 2. 커밋 메시지 컨벤션 및 버전 승격 규칙
+## 2. Commit Message Convention & Version Bump Rules
 
-저장소는 [Conventional Commits](https://www.conventionalcommits.org/) 표준을 기반으로 버전을 자동으로 판별합니다:
+The repository automatically determines the version based on the [Conventional Commits](https://www.conventionalcommits.org/) standard:
 
-| 커밋 접두사 (Type) | 의미 | 승격되는 버전 (SemVer) | 예시 |
+| Commit Prefix (Type) | Meaning | Version Bump (SemVer) | Example |
 | :--- | :--- | :---: | :--- |
-| **`fix:`**, **`perf:`** | 버그 수정 및 성능 개선 | **PATCH** (`+0.0.1`) | `fix: handle null pointer in Netty trace context (#15)` |
-| **`feat:`** | 새로운 기능 추가 | **MINOR** (`+0.1.0`) | `feat: support Redis command latency tracing (#16)` |
-| **`BREAKING CHANGE:`** 또는 **`feat!:`** | 기존 API 파괴적 변경 | **MAJOR** (`+1.0.0`) | `feat!: change default apm properties hierarchy (#20)` |
+| **`fix:`**, **`perf:`** | Bug fixes and performance improvements | **PATCH** (`+0.0.1`) | `fix: handle null pointer in Netty trace context (#15)` |
+| **`feat:`** | New feature | **MINOR** (`+0.1.0`) | `feat: support Redis command latency tracing (#16)` |
+| **`BREAKING CHANGE:`** or **`feat!:`** | Breaking change to an existing API | **MAJOR** (`+1.0.0`) | `feat!: change default apm properties hierarchy (#20)` |
 
 ---
 
-## 3. PR 머지 가이드 (Squash and Merge)
+## 3. PR Merge Guide (Squash and Merge)
 
-PR을 머지할 때는 **"Squash and merge"** 방식을 적극 권장합니다.
+We strongly recommend using **"Squash and merge"** when merging a PR.
 
-1. PR 페이지 하단 머지 버튼에서 **"Squash and merge"** 선택.
-2. 생성되는 커밋 메시지의 **첫 줄(Title)**이 버전 결정의 기준이 되므로 컨벤션에 맞게 작성합니다:
-   - ✨ 기능 추가: `feat: add webflux reactive tracing support (#12)`
-   - 🐛 버그 수정: `fix: prevent duplicate log in mixed orm (#13)`
-   - 💥 메이저 변경: `feat!: upgrade minimum spring boot baseline to 3.2 (#14)`
-3. **Confirm squash and merge**를 클릭하면 즉시 자동 배포 파이프라인이 작동합니다.
-
----
-
-## 4. GitHub Actions 동작 단계 상세
-
-워크플로우 파일: [`.github/workflows/release.yml`](../.github/workflows/release.yml)
-
-1. **시맨틱 버전 판별 (`mathieudutour/github-tag-action`)**:
-   - `main` 브랜치의 최신 커밋들을 스캔하여 이전 태그와의 차이를 계산합니다.
-2. **품질 검증 빌드 (`./gradlew check --no-daemon`)**:
-   - 단위/통합 테스트, Google Java Format(`spotless`), SpotBugs 정적 분석, JaCoCo 커버리지 게이트가 모두 통과해야만 릴리즈가 진행됩니다.
-3. **GitHub Release 발행 (`softprops/action-gh-release`)**:
-   - 자동으로 릴리즈 태그와 함께 마크다운 릴리즈 노트를 생성하고, 사용자가 복사할 수 있는 JitPack 의존성 스니펫을 첨부합니다.
-4. **JitPack 빌드 사전 캐싱 (Warm-up)**:
-   - `curl -s -X GET "https://jitpack.io/api/builds/sweetpark/mini-apm-spring-boot-starter/vX.Y.Z"`를 실행하여 JitPack이 즉시 빌드를 시작하도록 트리거합니다.
-   - 외부 사용자가 라이브러리를 요청할 때 빌드 대기 시간 없이 즉시 다운로드됩니다.
+1. Select **"Squash and merge"** from the merge button at the bottom of the PR page.
+2. The generated commit message's **first line (title)** determines the version bump, so write it according to the convention:
+   - ✨ New feature: `feat: add webflux reactive tracing support (#12)`
+   - 🐛 Bug fix: `fix: prevent duplicate log in mixed orm (#13)`
+   - 💥 Major change: `feat!: upgrade minimum spring boot baseline to 3.2 (#14)`
+3. Clicking **Confirm squash and merge** immediately kicks off the automated release pipeline.
 
 ---
 
-## 5. 릴리즈 스킵 대상 커밋
+## 4. GitHub Actions Step-by-Step Details
 
-버전 번호가 불필요하게 증가하는 것을 방지하기 위해 다음 커밋들은 **새 릴리즈를 발행하지 않고 조용히 머지만 수행**됩니다:
-- `docs:` (README 또는 문서 수정)
-- `chore:` (의존성 번들 갱신, 빌드 스크립트 수정 등)
-- `style:` (코드 포맷팅)
-- `test:` (테스트 코드 보강)
-- `ci:` (GitHub Actions 워크플로우 수정)
+Workflow file: [`.github/workflows/release.yml`](../.github/workflows/release.yml)
+
+1. **Semantic version detection (`mathieudutour/github-tag-action`)**:
+   - Scans the latest commits on `main` and computes the diff against the previous tag.
+2. **Quality verification build (`./gradlew check --no-daemon`)**:
+   - The release only proceeds once unit/integration tests, Google Java Format (`spotless`), SpotBugs static analysis, and the JaCoCo coverage gate have all passed.
+3. **GitHub Release publishing (`softprops/action-gh-release`)**:
+   - Automatically generates markdown release notes alongside the release tag, and attaches a ready-to-copy JitPack dependency snippet.
+4. **JitPack build pre-caching (warm-up)**:
+   - Runs `curl -s -X GET "https://jitpack.io/api/builds/sweetpark/mini-apm-spring-boot-starter/vX.Y.Z"` to trigger JitPack into starting the build immediately.
+   - This means external users requesting the library get it right away, with no build wait time.
 
 ---
 
-## 6. 수동 릴리즈 (Manual Fallback)
+## 5. Commits That Skip a Release
 
-자동 릴리즈 외에 특정 버전을 강제로 직접 배포하고 싶을 경우:
+To avoid unnecessarily bumping the version number, the following commit types are **merged silently without publishing a new release**:
+- `docs:` (README or documentation changes)
+- `chore:` (dependency bumps, build script changes, etc.)
+- `style:` (code formatting)
+- `test:` (additional test coverage)
+- `ci:` (GitHub Actions workflow changes)
+
+---
+
+## 6. Manual Release (Manual Fallback)
+
+If you need to force-publish a specific version outside of the automated release:
 
 ```bash
-# 1. main 최신화
+# 1. Update main to the latest
 git checkout main
 git pull origin main
 
-# 2. 원하는 버전 태그 생성 및 푸시
+# 2. Create and push the desired version tag
 git tag -a v1.2.0 -m "Release v1.2.0: Manual deployment"
 git push origin v1.2.0
 ```
-태그를 푸시한 후 [JitPack 웹페이지](https://jitpack.io/#sweetpark/mini-apm-spring-boot-starter)에서 **`Get it`**을 클릭하면 즉시 빌드됩니다.
+After pushing the tag, click **`Get it`** on the [JitPack page](https://jitpack.io/#sweetpark/mini-apm-spring-boot-starter) to trigger an immediate build.

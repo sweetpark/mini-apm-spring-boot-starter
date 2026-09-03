@@ -1,40 +1,40 @@
-# 📖 mini-apm-spring-boot-starter 상세 사용 및 빌드 가이드 (Usage & Build Guide)
+# 📖 mini-apm-spring-boot-starter Usage & Build Guide
 
-본 문서는 `mini-apm-spring-boot-starter`의 설치 방법(JitPack vs 로컬 Maven), 소스 빌드, 런타임별 설정 및 고급 사용법을 다룹니다.
-
----
-
-## 📑 목차
-1. [스타터 설치 방법 (Installation - JitPack vs Local Maven)](#1-스타터-설치-방법-installation)
-   - [방법 A: JitPack을 통한 의존성 추가 (외부 프로젝트 권장)](#방법-a-jitpack을-통한-의존성-추가-외부-프로젝트-도입-시-권장)
-   - [방법 B: 소스 빌드 후 로컬 Maven(`mavenLocal()`) 설치 (사내망/오프라인 권장)](#방법-b-소스-코드-클론-후-로컬-mavenmavenlocal-직접-빌드설치-사내망오프라인커스텀-패치-시)
-2. [소스 코드 빌드 및 품질 검증 (Build & Quality Gate)](#2-소스-코드-빌드-및-품질-검증-build--quality-gate)
-3. [런타임별 사용 가이드](#3-런타임별-사용-가이드)
-   - [Spring MVC (Servlet) 환경](#31-spring-mvc-servlet-환경)
-   - [MyBatis 환경](#32-mybatis-환경)
-   - [Spring Data JPA / Hibernate 환경](#33-spring-data-jpa--hibernate-환경)
-   - [Netty TCP 소켓 환경](#34-netty-tcp-소켓-환경)
-   - [Spring Batch 환경](#35-spring-batch-환경)
-4. [전체 설정 프로퍼티 레퍼런스](#4-전체-설정-프로퍼티-레퍼런스)
-5. [민감정보 마스킹 및 보안](#5-민감정보-마스킹-및-보안)
-6. [에러 지문 해싱 및 사용자 정의 에러 평가](#6-에러-지문-해싱-및-사용자-정의-에러-평가)
-7. [Grafana Loki 대시보드 연동](#7-grafana-loki-대시보드-연동)
+This document covers how to install `mini-apm-spring-boot-starter` (JitPack vs. local Maven), how to build it from source, per-runtime configuration, and advanced usage.
 
 ---
 
-## 1. 스타터 설치 방법 (Installation)
-
-`mini-apm-spring-boot-starter`를 프로젝트에 도입하는 방법은 **① JitPack 원격 저장소 사용**과 **② 소스 빌드 후 로컬 Maven(`mavenLocal()`) 사용** 2가지 방식이 지원됩니다.
+## 📑 Table of Contents
+1. [Installing the Starter (JitPack vs. Local Maven)](#1-installing-the-starter)
+   - [Option A: Add the dependency via JitPack (recommended for external projects)](#option-a-add-the-dependency-via-jitpack-recommended-for-external-projects)
+   - [Option B: Clone and build locally via Maven (`mavenLocal()`)](#option-b-clone-and-build-locally-via-maven-mavenlocal-recommended-for-internal-networksoffline-use)
+2. [Building & Verifying Quality Gates](#2-building--verifying-quality-gates)
+3. [Per-Runtime Usage Guide](#3-per-runtime-usage-guide)
+   - [Spring MVC (Servlet) Environment](#31-spring-mvc-servlet-environment)
+   - [MyBatis Environment](#32-mybatis-environment)
+   - [Spring Data JPA / Hibernate Environment](#33-spring-data-jpa--hibernate-environment)
+   - [Netty TCP Socket Environment](#34-netty-tcp-socket-environment)
+   - [Spring Batch Environment](#35-spring-batch-environment)
+4. [Full Configuration Property Reference](#4-full-configuration-property-reference)
+5. [Sensitive Data Masking & Security](#5-sensitive-data-masking--security)
+6. [Error Fingerprint Hashing & Custom Error Evaluation](#6-error-fingerprint-hashing--custom-error-evaluation)
+7. [Grafana Loki Dashboard Integration](#7-grafana-loki-dashboard-integration)
 
 ---
 
-### 방법 A: JitPack을 통한 의존성 추가 (외부 프로젝트 도입 시 권장)
-별도의 소스 다운로드나 로컬 빌드 없이 Gradle / Maven 저장소 설정만으로 즉시 사용할 수 있습니다.
+## 1. Installing the Starter
 
-- 🌐 **JitPack 배포 주소**: [https://jitpack.io/#sweetpark/mini-apm-spring-boot-starter](https://jitpack.io/#sweetpark/mini-apm-spring-boot-starter)
+There are two supported ways to add `mini-apm-spring-boot-starter` to your project: **① use the JitPack remote repository**, or **② build from source and use it via local Maven (`mavenLocal()`)**.
+
+---
+
+### Option A: Add the dependency via JitPack (recommended for external projects)
+Use it immediately with just a Gradle/Maven repository declaration -- no source download or local build required.
+
+- 🌐 **JitPack page**: [https://jitpack.io/#sweetpark/mini-apm-spring-boot-starter](https://jitpack.io/#sweetpark/mini-apm-spring-boot-starter)
 - 📌 **GroupId**: `com.github.sweetpark`
 - 📌 **ArtifactId**: `mini-apm-spring-boot-starter`
-- 📌 **최신 버전**: `v1.0.0` (또는 `main-SNAPSHOT`)
+- 📌 **Latest version**: `v1.0.0` (or `main-SNAPSHOT`)
 
 #### Gradle (Groovy)
 `build.gradle`:
@@ -45,7 +45,7 @@ repositories {
 }
 
 dependencies {
-    // 최신 릴리즈 태그 (예: v1.0.0) 또는 특정 커밋 해시
+    // Latest release tag (e.g. v1.0.0) or a specific commit hash
     implementation 'com.github.sweetpark:mini-apm-spring-boot-starter:v1.0.0'
 }
 ```
@@ -83,23 +83,23 @@ dependencies {
 
 ---
 
-### 방법 B: 소스 코드 클론 후 로컬 Maven(`mavenLocal()`) 직접 빌드/설치 (사내망/오프라인/커스텀 패치 시)
-사내망, 오프라인 환경 또는 스타터 소스를 직접 수정하여 사용할 때는 로컬 Maven 저장소(`~/.m2/repository`)에 직접 빌드 및 설치하여 사용할 수 있습니다.
+### Option B: Clone and build locally via Maven (`mavenLocal()`) (recommended for internal networks/offline use)
+For internal networks, offline environments, or when you need to modify the starter's own source, you can build and install it directly to your local Maven repository (`~/.m2/repository`).
 
-> 💡 **안내 (GroupId)**: 소스에서 로컬 빌드 시 공식 GroupId인 **`io.github.sweetpark`**가 사용됩니다.
+> 💡 **Note (GroupId)**: local builds from source use the official GroupId **`io.github.sweetpark`**.
 
-#### 1단계: 스타터 소스 클론 및 로컬 배포
+#### Step 1: Clone the starter source and publish it locally
 ```bash
-# 1. 저장소 복제
+# 1. Clone the repository
 git clone https://github.com/sweetpark/mini-apm-spring-boot-starter.git
 cd mini-apm-spring-boot-starter
 
-# 2. 로컬 Maven 저장소(~/.m2/repository)에 배포
+# 2. Publish to your local Maven repository (~/.m2/repository)
 ./gradlew publishToMavenLocal
 ```
-> 빌드 완료 시 `~/.m2/repository/io/github/sweetpark/mini-apm-spring-boot-starter/1.0.0/` 경로에 `.jar` 및 `.pom` 파일이 자동 설치됩니다.
+> Once the build completes, the `.jar` and `.pom` files are installed automatically at `~/.m2/repository/io/github/sweetpark/mini-apm-spring-boot-starter/1.0.0/`.
 
-#### 2단계: 내 애플리케이션 프로젝트 설정
+#### Step 2: Configure your own application project
 **Gradle (Groovy)**:
 ```groovy
 repositories {
@@ -137,72 +137,72 @@ dependencies {
 
 ---
 
-## 2. 소스 코드 빌드 및 품질 검증 (Build & Quality Gate)
+## 2. Building & Verifying Quality Gates
 
-직접 소스 코드를 내려받아 빌드하거나 품질 게이트를 검증할 때 사용합니다.
+Use this section when you're downloading and building the source yourself, or verifying the quality gates.
 
-### 사전 요구사항
-- **JDK 17** 이상 (Java 17, 21 권장)
-- 별도의 Gradle 설치 불필요 (프로젝트에 번들된 `./gradlew` Wrapper 사용)
+### Prerequisites
+- **JDK 17** or later (Java 17 or 21 recommended)
+- No separate Gradle installation needed -- the project bundles a `./gradlew` wrapper
 
-### 빌드 및 테스트 실행
+### Build & Run Tests
 ```bash
-# 1. 코드 스타일 포맷팅 적용 (Google Java Format)
+# 1. Apply code formatting (Google Java Format)
 ./gradlew spotlessApply
 
-# 2. 전체 단위/통합 테스트, 정적 분석(SpotBugs) 및 커버리지 게이트 검증
+# 2. Run all unit/integration tests, static analysis (SpotBugs), and the coverage gate
 ./gradlew check
 
-# 3. JaCoCo 테스트 커버리지 리포트 생성
+# 3. Generate the JaCoCo test coverage report
 ./gradlew jacocoTestReport
-# 리포트 위치: build/reports/jacoco/test/html/index.html
+# Report location: build/reports/jacoco/test/html/index.html
 ```
 
 ---
 
-## 3. 런타임별 사용 가이드
+## 3. Per-Runtime Usage Guide
 
-### 3.1 Spring MVC (Servlet) 환경
-Spring Boot Starter Web 의존성이 존재하면 별도 설정 없이 `ApmWebAutoConfiguration`이 자동 활성화됩니다.
-- 요청마다 `LoggingFilter`가 동작하여 고유 `trace_id` 발급 (또는 수신된 `X-Trace-Id` / W3C `traceparent` 계승).
-- 응답 헤더에 `X-Trace-Id`를 자동 주입하여 클라이언트-서버 간 분산 트레이싱 지원.
-- JSON 요청 및 응답 본문을 `ContentCachingRequestWrapper`를 통해 안전하게 캡처 (파일 업로드/바이너리 다운로드는 자동 스킵).
+### 3.1 Spring MVC (Servlet) Environment
+When the Spring Boot Starter Web dependency is present, `ApmWebAutoConfiguration` activates automatically with no extra configuration.
+- `LoggingFilter` runs on every request, issuing a unique `trace_id` (or inheriting an incoming `X-Trace-Id` / W3C `traceparent`).
+- `X-Trace-Id` is automatically injected into the response header, enabling distributed tracing between client and server.
+- JSON request and response bodies are safely captured via `ContentCachingRequestWrapper` (file uploads/binary downloads are automatically skipped).
 
-#### 출력 로그 예시
+#### Example log output
 ```logfmt
 2026-09-02 14:30:10.123 [http-nio-8080-exec-1] INFO ApmLog [HTTP] - trace_id=f47ac10b58cc4372a5670e02b2c3d479 span_id=a1b2c3d4e5f60708 interface_id=- uri=/api/v1/orders method=POST status=200 elapsed=45ms
 ```
 
 ---
 
-### 3.2 MyBatis 환경
-`mybatis-spring-boot-starter`가 클래스패스에 존재하면 `SqlTraceInterceptor`가 MyBatis의 `Executor`를 자동으로 가로챕니다.
-- MappedStatement ID (예: `com.example.OrderMapper.selectById`).
-- 바인딩된 파라미터가 치환된 **완성형 SQL**.
-- 쿼리 수행 시간 및 슬로우 쿼리(`[SLOW_SQL]`) 마킹.
+### 3.2 MyBatis Environment
+When `mybatis-spring-boot-starter` is on the classpath, `SqlTraceInterceptor` automatically intercepts MyBatis's `Executor`.
+- The MappedStatement ID (e.g. `com.example.OrderMapper.selectById`).
+- The **fully-bound SQL**, with bound parameters substituted in.
+- Query execution time, and slow queries tagged with `[SLOW_SQL]`.
 
-#### 출력 로그 예시
+#### Example log output
 ```logfmt
 2026-09-02 14:30:10.124 [http-nio-8080-exec-1] INFO ApmLog [SQL] - trace_id=f47ac10b58cc4372a5670e02b2c3d479 span_id=a1b2c3d4e5f60708 sql_id=com.example.OrderMapper.selectById elapsed=3ms sql="SELECT * FROM orders WHERE id = 100" param="id=100"
 ```
 
 ---
 
-### 3.3 Spring Data JPA / Hibernate 환경
-Spring Data JPA 또는 순수 JDBC 환경에서는 `ApmDataSourceBeanPostProcessor`가 Spring의 `DataSource` 빈을 `ApmProxyDataSource`로 래핑합니다.
-- `ApmProxyPreparedStatement`가 바인딩된 파라미터 및 실행 시간을 자동 수집.
-- **MyBatis와 동시 사용 시 중복 방지**: MyBatis 쿼리가 실행 중일 때는 MyBatis 인터셉터가 우선 기록하고, DataSource 프록시는 자동으로 추적을 양보하여 동일 쿼리가 두 번 기록되지 않습니다.
-- **N+1 쿼리 감지**: 동일 트랜잭션/요청 내에서 동일한 쿼리가 3회(설정 가능) 이상 반복 실행되면 `[N1_QUERY]` 경고 로그 출력.
+### 3.3 Spring Data JPA / Hibernate Environment
+In a Spring Data JPA or plain JDBC environment, `ApmDataSourceBeanPostProcessor` wraps Spring's `DataSource` bean in an `ApmProxyDataSource`.
+- `ApmProxyPreparedStatement` automatically collects bound parameters and execution time.
+- **De-duplication when used alongside MyBatis**: while a MyBatis query is executing, the MyBatis interceptor logs it first and the DataSource proxy automatically yields tracking, so the same query is never logged twice.
+- **N+1 query detection**: if the same query executes 3 or more times (configurable) within the same transaction/request, a `[N1_QUERY]` warning is logged.
 
-#### N+1 감지 로그 예시
+#### Example N+1 detection log
 ```logfmt
 2026-09-02 14:30:10.128 [http-nio-8080-exec-1] WARN ApmLog [N1_QUERY] - trace_id=f47ac10b58cc4372a5670e02b2c3d479 sql_id=SELECT:USER call_count=4 possible N+1 detected — consider fetch join or batch size
 ```
 
 ---
 
-### 3.4 Netty TCP 소켓 환경
-Netty 기반 서버 파이프라인에서 `NettyTraceDuplexHandler`를 파이프라인에 추가하면 TCP 소켓 단위 트레이싱을 제공합니다.
+### 3.4 Netty TCP Socket Environment
+Add `NettyTraceDuplexHandler` to a Netty-based server pipeline to get per-socket TCP tracing.
 ```java
 @Component
 public class TcpServerChannelInitializer extends ChannelInitializer<SocketChannel> {
@@ -221,16 +221,16 @@ public class TcpServerChannelInitializer extends ChannelInitializer<SocketChanne
 }
 ```
 
-#### 출력 로그 예시
+#### Example log output
 ```logfmt
 2026-09-02 14:30:12.450 [nioEventLoopGroup-3-1] INFO ApmLog [NETTY] - trace_id=d8a4f10c59ba4182 span_id=b2c3d4e5 interface_id=TCP_ORDER client_ip=/192.168.1.100:54321 method=INBOUND status=SUCCESS elapsed=8ms sql_count=1 sql_total_elapsed=2ms
 ```
 
 ---
 
-### 3.5 Spring Batch 환경
-`spring-boot-starter-batch`가 포함된 환경에서는 `LoggingBatchListener`가 Job 및 Step 실행 전후를 자동 계측합니다.
-- 멀티스레드 스텝 구성 시 `ApmTaskDecorator`를 `TaskExecutor`에 등록하면 메인 스레드의 트레이스 ID가 비동기 작업 스레드로 자동 전파됩니다.
+### 3.5 Spring Batch Environment
+When `spring-boot-starter-batch` is present, `LoggingBatchListener` automatically instruments Job and Step execution before and after.
+- For multi-threaded step configurations, registering `ApmTaskDecorator` on your `TaskExecutor` automatically propagates the main thread's trace ID to asynchronous worker threads.
 
 ```java
 @Bean
@@ -246,108 +246,108 @@ public TaskExecutor batchTaskExecutor() {
 
 ---
 
-## 4. 전체 설정 프로퍼티 레퍼런스
+## 4. Full Configuration Property Reference
 
-`application.yml` 또는 `application.properties`에서 설정 가능한 전체 옵션 목록입니다:
+The full list of options configurable in `application.yml` or `application.properties`:
 
 ```yaml
 apm:
-  # APM 전체 활성화 여부 (기본값: true)
+  # Enables/disables APM entirely (default: true)
   enabled: true
 
   trace:
-    # 로깅 레벨: PROD (경량 레이턴시/상태 위주), TRACE (상세 바디/SQL 포함)
+    # Logging level: PROD (lightweight latency/status only), TRACE (includes detailed body/SQL)
     level: PROD
-    # HTTP 요청/응답 헤더에 사용할 트레이스 ID 헤더명
+    # Header name used to carry the trace ID in HTTP requests/responses
     header-name: X-Trace-Id
-    # 시스템 인터페이스 구분용 헤더명
+    # Header name used to identify the calling system interface
     interface-header-name: X-Interface-Id
 
   slow:
-    # API 응답 지연 경고 임계치 (ms)
+    # API response latency warning threshold (ms)
     api-ms: 1000
     query:
-      # 단일 SQL 슬로우 쿼리 경고 임계치 (ms)
+      # Single SQL slow query warning threshold (ms)
       ms: 300
-      # 단일 요청 내 전체 SQL 누적 시간 초과 임계치 (ms)
+      # Threshold for cumulative SQL time across a single request (ms)
       total-ms: 1000
 
   capture:
-    # Body 캡처 전략: ALWAYS, ERROR, SLOW, SAMPLE, OFF (기본값: ERROR)
+    # Body capture strategy: ALWAYS, ERROR, SLOW, SAMPLE, OFF (default: ERROR)
     body: ERROR
-    # SQL 쿼리 캡처 전략: ALWAYS, ERROR, SLOW, SAMPLE, OFF (기본값: SLOW)
+    # SQL query capture strategy: ALWAYS, ERROR, SLOW, SAMPLE, OFF (default: SLOW)
     sql: SLOW
-    # SAMPLE 모드 사용 시 샘플링 비율 (0.01 = 1%, 0.1 = 10%)
+    # Sampling rate when using SAMPLE mode (0.01 = 1%, 0.1 = 10%)
     sample-rate: 0.01
 
   security:
-    # 개인/민감정보 마스킹 활성화 여부
+    # Enables masking of personal/sensitive data
     masking-enabled: true
-    # Body 내 민감정보 마스킹 적용 여부
+    # Whether to mask sensitive data in the body
     mask-body: true
-    # SQL 파라미터 내 민감정보 마스킹 적용 여부
+    # Whether to mask sensitive data in SQL parameters
     mask-sql-param: true
 
   limit:
-    # 요청당 최대 수집 SQL 수 (OOM 방지)
+    # Max SQL statements collected per request (OOM prevention)
     max-sql-count: 100
-    # SQL 본문 및 파라미터를 보관할 최대 쿼리 수
+    # Max number of queries for which body and parameters are retained
     max-sql-detail-count: 10
-    # SQL 최대 기록 문자열 길이
+    # Max recorded SQL string length
     max-sql-length: 2000
-    # SQL 파라미터 최대 기록 문자열 길이
+    # Max recorded SQL parameter string length
     max-sql-param-length: 1000
-    # 요청/응답 Body 최대 기록 문자열 길이
+    # Max recorded request/response body string length
     max-body-length: 2000
-    # N+1 쿼리 감지 임계 호출 횟수
+    # Call-count threshold for N+1 query detection
     n1-detection-threshold: 3
-    # 스택 트레이스 최대 분석 깊이
+    # Max stack trace depth to analyze
     max-stack-depth: 5
 
   error:
-    # 에러로 판정할 최소 HTTP 상태 코드 (기본값: 400)
+    # Minimum HTTP status code considered an error (default: 400)
     http-status-threshold: 400
-    # JSON 응답 본문에서 에러 코드를 탐색할 키 목록
+    # Keys to search for an error code within a JSON response body
     error-code-keys:
       - resCode
       - res_cd
       - code
       - errorCode
       - status
-    # 비즈니스 에러로 판정할 에러 코드 값 목록
+    # Error code values considered a business error
     error-codes:
       - "9999"
       - ERROR
       - FAIL
       - ERR
-    # 에러 지문 생성 시 포함할 패키지 프리픽스 (예: com.mycompany)
+    # Package prefixes to include when generating the error fingerprint (e.g. com.mycompany)
     app-package-prefixes:
       - com.mycompany
 ```
 
 ---
 
-## 5. 민감정보 마스킹 및 보안
+## 5. Sensitive Data Masking & Security
 
-`SensitiveDataMasker`가 정규식 기반으로 고속 치환을 수행합니다:
-- **신용카드 번호**: `1234-5678-1234-5678` ➔ `1234-****-****-5678`
-- **주민등록번호 (RRN)**: `900101-1234567` ➔ `900101-1******`
-- **이메일 주소**: `user@example.com` ➔ `u***@example.com`
-- **전화번호**: `010-1234-5678` ➔ `010-****-5678`
+`SensitiveDataMasker` performs fast, regex-based substitution:
+- **Credit card numbers**: `1234-5678-1234-5678` -> `1234-****-****-5678`
+- **Korean Resident Registration Numbers (RRN)**: `900101-1234567` -> `900101-1******`
+- **Email addresses**: `user@example.com` -> `u***@example.com`
+- **Phone numbers**: `010-1234-5678` -> `010-****-5678`
 
 ---
 
-## 6. 에러 지문 해싱 및 사용자 정의 에러 평가
+## 6. Error Fingerprint Hashing & Custom Error Evaluation
 
-### 에러 지문 해싱 (`error_fingerprint`)
-예외 발생 시 Spring/Tomcat 프레임워크 내부 스택을 제외하고 애플리케이션 핵심 라인만 해싱하여 12자리 SHA-256 해시를 생성합니다.
+### Error Fingerprint Hashing (`error_fingerprint`)
+When an exception occurs, framework-internal Spring/Tomcat stack frames are excluded and only the application's core lines are hashed into a 12-character SHA-256 fingerprint.
 ```logfmt
 2026-09-02 14:30:15.890 [http-nio-8080-exec-2] ERROR ApmLog [EXCEPTION] - trace_id=... error_fingerprint=a4f9b21c08d3 error_type=DATABASE message="Connection timed out" breadcrumbs=[{cat:"SQL",msg:"SELECT:USER 250ms"}, {cat:"SQL_ERROR",msg:"SELECT:ORDER 5000ms"}]
 ```
-Grafana Loki에서 동일한 근본 원인의 예외를 `error_fingerprint`를 기준으로 실시간 그룹화 및 카운팅할 수 있습니다.
+This lets Grafana Loki group and count exceptions with the same root cause in real time, keyed by `error_fingerprint`.
 
-### 사용자 정의 `ErrorEvaluator` Bean 등록
-기본 에러 판정 로직 외에 특별한 비즈니스 에러 판정이 필요한 경우, `ErrorEvaluator` 빈을 등록하면 기본 구현체를 자동 대체합니다:
+### Registering a Custom `ErrorEvaluator` Bean
+If you need custom business error evaluation logic beyond the default, registering an `ErrorEvaluator` bean automatically replaces the default implementation:
 ```java
 @Configuration
 public class CustomApmConfig {
@@ -373,12 +373,12 @@ public class CustomApmConfig {
 
 ---
 
-## 7. Grafana Loki 대시보드 연동
+## 7. Grafana Loki Dashboard Integration
 
-본 프로젝트에 번들된 [`grafana/mini-apm-dashboard.json`](../grafana/mini-apm-dashboard.json)을 Grafana에 임포트하여 다음 패널을 즉시 사용할 수 있습니다:
-1. **HTTP RPS (Request Per Second)**: 상태 코드별 실시간 요청 추이
-2. **API Latency Percentiles**: p95, p99, 평균 응답 시간
-3. **Slow SQL & Total SQL Slow**: 슬로우 쿼리 발생 빈도 및 누적 지연 쿼리
-4. **N+1 Query Warnings**: N+1 쿼리 감지 경고 목록
-5. **Error Breakdown by Fingerprint**: 상위 에러 지문별 발생 랭킹
-6. **Unified Log Stream**: 로그 레벨 및 마커(`[HTTP]`, `[SQL]`, `[EXCEPTION]` 등) 기반의 실시간 통합 로그 스트림
+Import the bundled [`grafana/mini-apm-dashboard.json`](../grafana/mini-apm-dashboard.json) into Grafana to get these panels immediately:
+1. **HTTP RPS (Requests Per Second)**: real-time request trends by status code
+2. **API Latency Percentiles**: p95, p99, and average response time
+3. **Slow SQL & Total SQL Slow**: frequency of slow queries and cumulative slow-query time
+4. **N+1 Query Warnings**: list of N+1 query detection warnings
+5. **Error Breakdown by Fingerprint**: ranking of the most frequent error fingerprints
+6. **Unified Log Stream**: a real-time unified log stream keyed by log level and marker (`[HTTP]`, `[SQL]`, `[EXCEPTION]`, etc.)
