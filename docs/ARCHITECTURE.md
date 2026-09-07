@@ -14,50 +14,41 @@ mini-apm-spring-boot-starter is an ultra-lightweight, non-invasive APM (Applicat
 ---
 
 ## 2. Component Diagram
-
-`mermaid
+```mermaid
 graph TD
-    subgraph Client Requests
+    subgraph Client["Client Requests"]
         HTTP["HTTP (Servlet MVC)"]
         TCP["TCP (Netty)"]
         BATCH["Job / Step (Spring Batch)"]
     end
-
-    subgraph Observability Pipeline
+    subgraph Pipeline["Observability Pipeline"]
         LF["LoggingFilter / DuplexHandler / BatchListener"]
         TCH["TraceContextHolder (traceId, spanId, Breadcrumbs)"]
         EE["ErrorEvaluator (Status / Code / Exception)"]
         SDM["SensitiveDataMasker (Card / RRN / Custom)"]
     end
-
-    subgraph SQL Observability Layer
+    subgraph SQLLayer["SQL Observability Layer"]
         STC["SqlTraceContextHolder"]
         MYB["SqlTraceInterceptor (MyBatis Executor)"]
         JPA["ApmProxyDataSource (JPA / Hibernate / JDBC)"]
     end
-
-    subgraph Structured Log Output
+    subgraph LogOutput["Structured Log Output"]
         ALP["AbstractLogProcessor"]
         LOKI["Grafana / Loki / Alloy (logfmt Format)"]
     end
-
     HTTP --> LF
     TCP --> LF
     BATCH --> LF
-
     LF --> TCH
     LF --> STC
-
     MYB --> STC
     JPA --> STC
-
     STC --> ALP
     EE --> ALP
     SDM --> ALP
     TCH --> ALP
-
     ALP --> LOKI
-`
+```
 
 ---
 
