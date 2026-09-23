@@ -44,22 +44,22 @@
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
-          "unit": "ms"
+          "unit": "s"
         }
       },
       "gridPos": { "h": 7, "w": 8, "x": 8, "y": 1 },
       "id": 3,
       "targets": [
         {
-          "expr": "quantile_over_time(0.95, {job=~\"$job\"} | logfmt | marker=\"HTTP\" | unwrap elapsed [$__interval])",
+          "expr": "quantile_over_time(0.95, {job=~\"$job\"} | logfmt | marker=\"HTTP\" | unwrap duration(elapsed) [$__interval])",
           "legendFormat": "p95 Latency"
         },
         {
-          "expr": "quantile_over_time(0.99, {job=~\"$job\"} | logfmt | marker=\"HTTP\" | unwrap elapsed [$__interval])",
+          "expr": "quantile_over_time(0.99, {job=~\"$job\"} | logfmt | marker=\"HTTP\" | unwrap duration(elapsed) [$__interval])",
           "legendFormat": "p99 Latency"
         },
         {
-          "expr": "avg_over_time({job=~\"$job\"} | logfmt | marker=\"HTTP\" | unwrap elapsed [$__interval])",
+          "expr": "avg_over_time({job=~\"$job\"} | logfmt | marker=\"HTTP\" | unwrap duration(elapsed) [$__interval])",
           "legendFormat": "Avg Latency"
         }
       ],
@@ -108,13 +108,13 @@
     {
       "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
       "fieldConfig": {
-        "defaults": { "unit": "ms" }
+        "defaults": { "unit": "s" }
       },
       "gridPos": { "h": 7, "w": 12, "x": 12, "y": 9 },
       "id": 7,
       "targets": [
         {
-          "expr": "max_over_time({job=~\"$job\"} | logfmt | marker=~\"SQL|SLOW_SQL\" | unwrap elapsed [$__interval]) by (sql_id)",
+          "expr": "max_over_time({job=~\"$job\"} | logfmt | marker=~\"SQL|SLOW_SQL\" | unwrap duration(elapsed) [$__interval]) by (sql_id)",
           "legendFormat": "{{sql_id}}"
         }
       ],
