@@ -1,11 +1,11 @@
 plugins {
     id 'java-library'
-    id 'org.springframework.boot' version '3.2.1' apply false
-    id 'io.spring.dependency-management' version '1.1.4'
+    id 'org.springframework.boot' version '4.1.1' apply false
+    id 'io.spring.dependency-management' version '1.1.7'
     id 'maven-publish'
     id 'jacoco'
-    id 'com.diffplug.spotless' version '6.25.0'
-    id 'com.github.spotbugs' version '6.0.14'
+    id 'com.diffplug.spotless' version '8.10.1'
+    id 'com.github.spotbugs' version '6.5.11'
 }
 
 group = 'io.github.sweetpark'
@@ -26,13 +26,13 @@ repositories {
 }
 
 ext {
-    springBootVersion = '3.2.1'
-    springVersion = '6.1.2'
-    springBatchVersion = '5.1.0'
-    slf4jVersion = '2.0.9'
-    logbackVersion = '1.4.14'
-    jacksonVersion = '2.15.3'
-    servletApiVersion = '6.0.0'
+    springBootVersion = '4.1.1'
+    springVersion = '7.0.9'
+    springBatchVersion = '6.0.5'
+    slf4jVersion = '2.0.18'
+    logbackVersion = '1.6.3'
+    jacksonVersion = '2.22.2'
+    servletApiVersion = '6.1.0'
 }
 
 dependencyManagement {
@@ -58,13 +58,13 @@ dependencies {
     compileOnly "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
 
     /* ===== Optional / Supported Runtimes ===== */
-    compileOnly 'io.netty:netty-all:4.1.100.Final'
+    compileOnly 'io.netty:netty-all:4.2.17.Final'
     compileOnly "org.springframework.batch:spring-batch-core:${springBatchVersion}"
-    compileOnly 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
+    compileOnly 'org.mybatis.spring.boot:mybatis-spring-boot-starter:4.1.0'
     compileOnly "jakarta.servlet:jakarta.servlet-api:${servletApiVersion}"
 
     /* ===== SpotBugs Annotations ===== */
-    compileOnly 'com.github.spotbugs:spotbugs-annotations:4.8.3'
+    compileOnly 'com.github.spotbugs:spotbugs-annotations:4.10.4'
 
     /* ===== Configuration Metadata (application.yml IDE auto-completion) ===== */
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:${springBootVersion}"
@@ -74,7 +74,7 @@ dependencies {
     testImplementation "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
     testImplementation "org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}"
     testImplementation "org.springframework.boot:spring-boot-starter-batch:${springBootVersion}"
-    testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
+    testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:4.1.0'
     testImplementation 'com.h2database:h2'
 }
 
